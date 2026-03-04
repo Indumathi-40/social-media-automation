@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,7 +35,7 @@ import { useMutation, useQuery, useConvexAuth, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 
-export default function InstagramPage() {
+function InstagramDashboard() {
     const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("Queue");
     const [isMounted, setIsMounted] = useState(false);
@@ -775,5 +775,18 @@ export default function InstagramPage() {
                 key={editingPost ? editingPost._id : "create-new"}
             />
         </div>
+    );
+}
+
+export default function InstagramPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-full flex-col items-center justify-center space-y-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="text-gray-500 font-medium">Loading Dashboard...</p>
+            </div>
+        }>
+            <InstagramDashboard />
+        </Suspense>
     );
 }

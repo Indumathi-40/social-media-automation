@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useConvexAuth, useAction } from "convex/react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
     LayoutList,
@@ -34,7 +34,7 @@ import { CreatePostDialog } from "@/components/dashboard/create-post/create-post
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 
-export default function LinkedInPage() {
+function LinkedInDashboard() {
     const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("Queue");
     const [isMounted, setIsMounted] = useState(false);
@@ -783,5 +783,18 @@ export default function LinkedInPage() {
                 key={editingPost ? editingPost._id : "create-new"}
             />
         </div >
+    );
+}
+
+export default function LinkedInPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-full flex-col items-center justify-center space-y-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="text-gray-500 font-medium">Loading LinkedIn Dashboard...</p>
+            </div>
+        }>
+            <LinkedInDashboard />
+        </Suspense>
     );
 }

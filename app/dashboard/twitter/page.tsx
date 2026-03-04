@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useConvexAuth, useAction } from "convex/react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
     LayoutList,
@@ -35,7 +35,7 @@ import { CreatePostDialog } from "@/components/dashboard/create-post/create-post
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 
-export default function TwitterPage() {
+function TwitterDashboard() {
     const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("Queue");
     const [isMounted, setIsMounted] = useState(false);
@@ -195,7 +195,7 @@ export default function TwitterPage() {
 
                                 {/* Connect Button if not connected */}
                                 {!isConnected && (
-                                    <a href="/api/auth/x">
+                                    <a href="/api/auth/twitter">
                                         <Button
                                             size="sm"
                                             variant="outline"
@@ -452,5 +452,18 @@ export default function TwitterPage() {
                 key={editingPost ? editingPost._id : "create-new-twitter"}
             />
         </div>
+    );
+}
+
+export default function TwitterPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-full flex-col items-center justify-center space-y-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="text-gray-500 font-medium">Loading X Dashboard...</p>
+            </div>
+        }>
+            <TwitterDashboard />
+        </Suspense>
     );
 }
