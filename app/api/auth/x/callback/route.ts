@@ -68,12 +68,14 @@
 // mela ulla thu corrrect code deploy panna thu kadi na command paanirukka
 //killa ulla thu deploy panna code chatgpt kudutha code
 
+
+
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  return NextResponse.json({
-    message: "X OAuth temporarily disabled",
-  });
+    return NextResponse.json({
+        message: "X OAuth temporarily disabled",
+    });
 }
