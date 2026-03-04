@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+
 // import { NextResponse } from "next/server";
 // import { ConvexHttpClient } from "convex/browser";
 // import { api } from "@/convex/_generated/api";
@@ -63,3 +63,17 @@ export const dynamic = "force-dynamic";
 //         return NextResponse.redirect(`${baseUrl}/dashboard/twitter?error=${encodeURIComponent(err.message)}`);
 //     }
 // }
+
+
+// mela ulla thu corrrect code deploy panna thu kadi na command paanirukka
+//killa ulla thu deploy panna code chatgpt kudutha code
+
+export const dynamic = "force-dynamic";
+
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  return NextResponse.json({
+    message: "X OAuth temporarily disabled",
+  });
+}
