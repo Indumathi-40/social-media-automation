@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
 export async function GET(request: Request) {
+    console.log("!!! DEBUG: INSTAGRAM ROUTE IS RUNNING from app/api/auth/instagram/route.ts !!!");
     const { userId } = await auth();
 
     if (!userId) {
@@ -11,31 +12,31 @@ export async function GET(request: Request) {
     }
 
     const clientId = process.env.INSTAGRAM_CLIENT_ID;
+    const envRedirectUri = process.env.INSTAGRAM_REDIRECT_URI;
 
-    // Dynamically determine the base URL from the request origin
-    const { origin: baseUrl } = new URL(request.url);
-    const redirectUri = `${baseUrl}/api/auth/instagram/callback`;
+    // 1. Robust detection for Vercel/proxies
+    const host = request.headers.get("host") || "";
+    const protocol = request.headers.get("x-forwarded-proto") || "https";
+    const baseUrl = host.includes('localhost') ? `http://${host}` : `${protocol}://${host}`;
 
-    if (!clientId) {
-        return NextResponse.json(
-            { error: "Missing INSTAGRAM_CLIENT_ID" },
-            { status: 500 }
-        );
-    }
+    // 2. Clean Credentials
+    const cleanClientId = clientId?.trim().replace(/['"\s]/g, '');
 
-    // Instagram Graph API (via Facebook Login) permissions
-    const scopes = [
-        "instagram_basic",
-        "instagram_content_publish",
-        "pages_show_list",
-        "pages_read_engagement",
-    ].join(",");
+    // 3. Construct redirect URI
+    const redirectUri = envRedirectUri || `${baseUrl}/api/auth/instagram/callback`;
 
-    // Construct the Facebook Login Dialog URL
-    // https://developers.facebook.com/docs/facebook-login/guides/advanced/manual-flow
-    const url = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+    console.log(`[Instagram Auth] Initiation - Host: ${host}, Protocol: ${protocol}`);
+    console.log(`[Instagram Auth] Initiation - Client ID (Clean): ${cleanClientId}`);
+    console.log(`[Instagram Auth] Initiation - Redirect URI: ${redirectUri}`);
+
+    // Use the exact scopes from the working URL provided by the user
+    const scopes = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights";
+
+    // 4. Use the exact working Instagram endpoint and parameters provided by the user
+    const url = `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
         redirectUri
-    )}&scope=${scopes}&response_type=code&auth_type=reauthenticate`;
+    )}&scope=${scopes}&response_type=code`;
 
+    console.log(`[Instagram Auth] Full Redirect URL: ${url}`);
     return NextResponse.redirect(url);
 }

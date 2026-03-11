@@ -41,9 +41,16 @@ export async function GET(request: NextRequest) {
 
     const clientId = process.env.INSTAGRAM_CLIENT_ID;
     const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET;
+    const envRedirectUri = process.env.INSTAGRAM_REDIRECT_URI;
 
-    // Ensure this matches the initiate route
-    const redirectUri = `${baseUrl}/api/auth/instagram/callback`;
+    // Match initiation route detection logic
+    const host = request.headers.get("host") || "";
+    const protocol = request.headers.get("x-forwarded-proto") || "https";
+    const callbackBaseUrl = host.includes('localhost') ? `http://${host}` : `${protocol}://${host}`;
+
+    const redirectUri = envRedirectUri || `${callbackBaseUrl}/api/auth/instagram/callback`;
+    
+    console.log(`[Instagram Callback] Using Robust Redirect URI: ${redirectUri}`);
 
     if (!clientId || !clientSecret) {
         return NextResponse.redirect(
@@ -55,94 +62,62 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        // 1. Exchange Access Token
-        const tokenUrl = `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${clientId}&redirect_uri=${encodeURIComponent(
-            redirectUri
-        )}&client_secret=${clientSecret}&code=${code}`;
+        console.log(`[Instagram Callback] Received code: ${code?.substring(0, 10)}...`);
+        // 1. Exchange Code for Access Token
+        // Using the Instagram token endpoint for the branded flow
+        const cleanClientId = clientId.replace(/['"\s]/g, '');
+        const cleanClientSecret = clientSecret.replace(/['"\s]/g, '');
+        
+        const tokenFormData = new FormData();
+        tokenFormData.append("client_id", cleanClientId);
+        tokenFormData.append("client_secret", cleanClientSecret);
+        tokenFormData.append("grant_type", "authorization_code");
+        tokenFormData.append("redirect_uri", redirectUri);
+        tokenFormData.append("code", code);
 
-        const tokenResponse = await fetch(tokenUrl);
+        const tokenResponse = await fetch("https://api.instagram.com/oauth/access_token", {
+            method: "POST",
+            body: tokenFormData,
+        });
+
         const tokenData = await tokenResponse.json();
 
-        if (tokenData.error) {
-            throw new Error(tokenData.error.message);
+        if (tokenData.error_message || !tokenData.access_token) {
+            console.error("[Instagram Callback] Token exchange error:", tokenData);
+            throw new Error(tokenData.error_message || "Failed to exchange code for access token");
         }
 
-        const { access_token: accessToken, expires_in: expiresInSeconds } = tokenData;
+        let accessToken = tokenData.access_token;
 
-        // Calculate absolute expiry time
-        const tokenExpiry = Date.now() + (expiresInSeconds * 1000);
-
-        // 1.5. Debug Permissions
-        console.log(`[Instagram Auth] Checking permissions for user: ${userId}`);
-        const permUrl = `https://graph.facebook.com/v19.0/me/permissions?access_token=${accessToken}`;
-        const permResponse = await fetch(permUrl);
-        const permData = await permResponse.json();
-        const grantedPermissions = permData.data?.filter((p: any) => p.status === 'granted').map((p: any) => p.permission) || [];
-        console.log(`[Instagram Auth] Granted Permissions: ${grantedPermissions.join(', ')}`);
-
-        // 2. Fetch User's Pages (Handle Pagination)
-        let allPages: any[] = [];
-        let nextPageUrl = `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,instagram_business_account&limit=100&access_token=${accessToken}`;
-
-        while (nextPageUrl) {
-            const pagesResponse = await fetch(nextPageUrl);
-            const pagesData = await pagesResponse.json();
-
-            if (pagesData.error) {
-                console.error("[Instagram Auth] Pages fetch error:", pagesData.error);
-                throw new Error(`Failed to fetch pages: ${pagesData.error.message}`);
-            }
-
-            if (pagesData.data) {
-                allPages = [...allPages, ...pagesData.data];
-            }
-
-            nextPageUrl = pagesData.paging?.next || null;
-        }
-
-        // Find the first page with a connected Instagram Business Account
-        let pageWithInstagram = allPages.find(
-            (page: any) => page.instagram_business_account
-        );
-
-        // DEEP SCAN
-        if (!pageWithInstagram && allPages.length > 0) {
-            const deepScanResults = await Promise.all(
-                allPages.map(async (page) => {
-                    try {
-                        const scanToken = page.access_token || accessToken;
-                        const deepUrl = `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${scanToken}`;
-                        const deepRes = await fetch(deepUrl);
-                        const deepData = await deepRes.json();
-
-                        if (deepData.instagram_business_account) {
-                            return { ...page, instagram_business_account: deepData.instagram_business_account };
-                        }
-                    } catch (e) {
-                        console.error(`[Instagram Auth] Deep scan failed for page ${page.id}`, e);
-                    }
-                    return null;
-                })
-            );
-            pageWithInstagram = deepScanResults.find(result => result !== null);
-        }
-
-        if (!pageWithInstagram) {
-            const pageSummary = allPages.map((p: any) => `${p.name} (Has IG: ${!!p.instagram_business_account ? 'YES' : 'NO'})`).join(', ');
-            throw new Error(`Connection Failed. No linked Instagram Business Account found on your ${allPages.length} Facebook Pages. [${pageSummary}]`);
-        }
-
-        const instagramUserId = pageWithInstagram.instagram_business_account.id;
-        const facebookPageId = pageWithInstagram.id;
-
-        // 3. Fetch Instagram User Details
-        const igUserUrl = `https://graph.facebook.com/v19.0/${instagramUserId}?fields=id,name,username,profile_picture_url&access_token=${accessToken}`;
+        // 2. Fetch Instagram User Details
+        // We add name and profile_picture_url to get the "LinkedIn" same look.
+        console.log("[Instagram Callback] Fetching profile details...");
+        const igUserUrl = `https://graph.instagram.com/me?fields=id,username,name,profile_picture_url,account_type&access_token=${accessToken}`;
         const igResponse = await fetch(igUserUrl);
-        const igData = await igResponse.json();
+        let igData = await igResponse.json();
 
         if (igData.error) {
-            throw new Error(`Failed to fetch Instagram profile: ${igData.error.message}`);
+            console.warn("[Instagram Callback] graph.instagram.com failed, trying graph.facebook.com fallback...");
+            const fbMeUrl = `https://graph.facebook.com/v21.0/me?fields=id,name,username,profile_picture_url&access_token=${accessToken}`;
+            const fbResponse = await fetch(fbMeUrl);
+            const fbData = await fbResponse.json();
+            
+            if (fbData.error) {
+                console.error("[Instagram Callback] All profile fetch attempts failed:", igData.error, fbData.error);
+                throw new Error(`Failed to fetch profile: ${igData.error.message || fbData.error.message}`);
+            }
+            igData = { 
+                id: fbData.id, 
+                username: fbData.username || fbData.name?.toLowerCase().replace(/\s/g, '_'),
+                name: fbData.name,
+                profile_picture_url: fbData.profile_picture_url?.data?.url || fbData.profile_picture_url
+            };
         }
+
+        console.log(`[Instagram Callback] Successfully fetched profile for: ${igData.username}`);
+
+        const expiresInSeconds = 3600; 
+        const tokenExpiry = Date.now() + (expiresInSeconds * 1000);
 
         // 4. Store in Convex (AUTHENTICATED)
         const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
@@ -156,10 +131,9 @@ export async function GET(request: NextRequest) {
             accessToken: accessToken,
             expiresIn: expiresInSeconds,
             tokenExpiry: tokenExpiry,
-            facebookPageId: facebookPageId,
-            name: igData.name || igData.username,
-            username: igData.username,
-            profilePictureUrl: igData.profile_picture_url,
+            name: igData.name || "Instagram User",
+            username: igData.username || igData.name || "instagram_user",
+            profilePictureUrl: igData.profile_picture_url || "",
         });
 
         return NextResponse.redirect(new URL("/dashboard/instagram", baseUrl));

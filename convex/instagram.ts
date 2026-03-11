@@ -437,7 +437,7 @@ async function publishToInstagram(accessToken: string, instagramUserId: string, 
 }
 
 async function getMediaContainerStatus(accessToken: string, containerId: string) {
-    const url = `https://graph.facebook.com/v19.0/${containerId}`;
+    const url = `https://graph.instagram.com/${containerId}`;
     const params = new URLSearchParams({
         fields: "status_code",
         access_token: accessToken,
@@ -454,7 +454,7 @@ async function getMediaContainerStatus(accessToken: string, containerId: string)
 }
 
 async function getInstagramPermalink(accessToken: string, mediaId: string) {
-    const url = `https://graph.facebook.com/v19.0/${mediaId}`;
+    const url = `https://graph.instagram.com/${mediaId}`;
     const params = new URLSearchParams({
         fields: "permalink",
         access_token: accessToken,
@@ -471,7 +471,7 @@ async function getInstagramPermalink(accessToken: string, mediaId: string) {
 }
 
 async function createInstagramContainer(accessToken: string, instagramUserId: string, caption: string, imageUrl: string) {
-    const url = `https://graph.facebook.com/v19.0/${instagramUserId}/media`;
+    const url = `https://graph.instagram.com/${instagramUserId}/media`;
     const params = new URLSearchParams({
         image_url: imageUrl,
         caption: caption,
@@ -489,7 +489,7 @@ async function createInstagramContainer(accessToken: string, instagramUserId: st
 }
 
 async function publishInstagramContainer(accessToken: string, instagramUserId: string, creationId: string) {
-    const url = `https://graph.facebook.com/v19.0/${instagramUserId}/media_publish`;
+    const url = `https://graph.instagram.com/${instagramUserId}/media_publish`;
     const params = new URLSearchParams({
         creation_id: creationId,
         access_token: accessToken,

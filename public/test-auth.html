@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Instagram Auth Diagnostic</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .box {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #E1306C;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        code {
+            background: #eee;
+            padding: 2px 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Instagram Connection Diagnostic</h1>
+    <p>This tool helps you verify the exact URL being sent to Instagram.</p>
+
+    <div class="box" style="border-left: 10px solid #E1306C; background: #fff5f8;">
+        <h3 style="color: #E1306C; margin-top: 0;">⚠️ CRITICAL CHECK</h3>
+        <p>Make sure you are configuring the <strong>SAME App</strong> in Meta as you see here:</p>
+        <p><strong>App ID to use:</strong> <code
+                style="font-size: 1.5em; color: black; background: #ffdfba; padding: 5px;">1684327572450459</code></p>
+        <p><em>Check the URL in your browser when you are in Meta. It must contain this number.</em></p>
+    </div>
+
+    <div class="box">
+        <h3>1. Check these values</h3>
+        <label>Client ID (must match 1684327572450459):</label>
+        <input type="text" id="clientId" value="1684327572450459" style="background: #eef;">
+
+        <label>Redirect URI (Try these variants):</label>
+        <select id="uriSelect" onchange="document.getElementById('redirectUri').value = this.value">
+            <option value="https://social-media-automation-w4ea.vercel.app/api/auth/instagram/callback">
+                https://social-media-automation-w4ea.vercel.app/api/auth/instagram/callback (Production)</option>
+            <option value="http://localhost:3000/api/auth/instagram/callback">
+                http://localhost:3000/api/auth/instagram/callback (Standard Localhost)</option>
+        </select>
+        <input type="text" id="redirectUri" value="http://localhost:3000/api/auth/instagram/callback">
+    </div>
+
+    <div class="box">
+        <h3>2. Generated Link</h3>
+        <p>Click the button below. If you see the error, the values above <strong>do not match</strong> your Meta
+            Dashboard.</p>
+        <button onclick="testAuth()">Test Connect Button</button>
+    </div>
+
+    <div class="box" id="resultBox" style="display:none; background: #e7f3ff; border-color: #2196f3;">
+        <h3 style="color: #0d47a1;">✅ This URI worked!</h3>
+        <p>Copy the URI below and follow the <strong>Click-by-Click Guide</strong> in our chat:</p>
+        <code id="workingUri"
+            style="font-size: 1.2em; display: block; border: 1px dashed #2196f3; padding: 10px; margin: 10px 0;"></code>
+    </div>
+
+    <script>
+        function testAuth() {
+            const clientId = document.getElementById('clientId').value.trim();
+            const redirectUri = document.getElementById('redirectUri').value.trim();
+            const scopes = "instagram_business_basic,instagram_business_content_publish,instagram_business_manage_comments,instagram_business_manage_insights";
+
+            const url = `https://www.facebook.com/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&response_type=code`;
+
+            console.log("Full Test URL:", url);
+            // Show the worked URI if the user comes back to this page (simulated)
+            localStorage.setItem('lastTestedUri', redirectUri);
+            window.location.href = url;
+        }
+
+        // Simple logic to show success if they come back
+        window.onload = function () {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('success')) {
+                const lastUri = localStorage.getItem('lastTestedUri');
+                if (lastUri) {
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('workingUri').innerText = lastUri;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>
