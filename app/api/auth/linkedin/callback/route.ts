@@ -13,8 +13,8 @@ export async function GET(req: NextRequest) {
     const error = searchParams.get("error");
     const state = searchParams.get("state");
 
-    const host = req.headers.get("host") || "localhost:3000";
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://earl-offscreen-wanita.ngrok-free.dev";
+    // Dynamically determine the base URL from the request origin
+    const { origin: baseUrl } = new URL(req.url);
 
     if (error) {
         return NextResponse.redirect(new URL(`/dashboard/linkedin?error=${error}`, baseUrl));

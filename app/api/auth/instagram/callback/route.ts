@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
     const errorReason = searchParams.get("error_reason");
     const errorDescription = searchParams.get("error_description");
 
-    // Synchronize with LinkedIn/X: Use ngrok URL as primary fallback for this environment
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://earl-offscreen-wanita.ngrok-free.dev";
+    // Dynamically determine the base URL from the request origin
+    const { origin: baseUrl } = new URL(request.url);
 
     if (error) {
         return NextResponse.redirect(

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 
-export async function GET() {
+export async function GET(request: Request) {
     const { userId } = await auth();
 
     if (!userId) {
@@ -12,9 +12,8 @@ export async function GET() {
 
     const clientId = process.env.INSTAGRAM_CLIENT_ID;
 
-    // Use the specific ngrok URL if provided in env, otherwise fallback to NEXT_PUBLIC_APP_URL
-    // The user explicitly requested: https://earl-offscreen-wanita.ngrok-free.dev/api/auth/instagram/callback
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://earl-offscreen-wanita.ngrok-free.dev";
+    // Dynamically determine the base URL from the request origin
+    const { origin: baseUrl } = new URL(request.url);
     const redirectUri = `${baseUrl}/api/auth/instagram/callback`;
 
     if (!clientId) {

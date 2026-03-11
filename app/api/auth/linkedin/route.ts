@@ -9,9 +9,8 @@ export async function GET(req: NextRequest) {
     const host = req.headers.get("host") || "localhost:3000";
     const protocol = host.includes("localhost") ? "http" : "https";
 
-    // Use the specific ngrok URL if provided in env, otherwise fallback to detect from host
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ||
-        (host.includes("ngrok-free.dev") ? `${protocol}://${host}` : "https://earl-offscreen-wanita.ngrok-free.dev");
+    // Dynamically determine the base URL from the request origin
+    const { origin: baseUrl } = new URL(req.url);
 
     if (!userId) {
         return NextResponse.redirect(`${baseUrl}/sign-in`);
