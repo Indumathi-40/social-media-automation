@@ -90,28 +90,14 @@ export async function GET(request: NextRequest) {
         let accessToken = tokenData.access_token;
 
         // 2. Fetch Instagram User Details
-        // We add name and profile_picture_url to get the "LinkedIn" same look.
-        console.log("[Instagram Callback] Fetching profile details...");
-        const igUserUrl = `https://graph.instagram.com/me?fields=id,username,name,profile_picture_url,account_type&access_token=${accessToken}`;
+        console.log("[Instagram Callback] Fetching profile details from graph.instagram.com...");
+        const igUserUrl = `https://graph.instagram.com/me?fields=id,username&access_token=${accessToken}`;
         const igResponse = await fetch(igUserUrl);
-        let igData = await igResponse.json();
+        const igData = await igResponse.json();
 
         if (igData.error) {
-            console.warn("[Instagram Callback] graph.instagram.com failed, trying graph.facebook.com fallback...");
-            const fbMeUrl = `https://graph.facebook.com/v21.0/me?fields=id,name,username,profile_picture_url&access_token=${accessToken}`;
-            const fbResponse = await fetch(fbMeUrl);
-            const fbData = await fbResponse.json();
-            
-            if (fbData.error) {
-                console.error("[Instagram Callback] All profile fetch attempts failed:", igData.error, fbData.error);
-                throw new Error(`Failed to fetch profile: ${igData.error.message || fbData.error.message}`);
-            }
-            igData = { 
-                id: fbData.id, 
-                username: fbData.username || fbData.name?.toLowerCase().replace(/\s/g, '_'),
-                name: fbData.name,
-                profile_picture_url: fbData.profile_picture_url?.data?.url || fbData.profile_picture_url
-            };
+            console.error("[Instagram Callback] Profile fetch failed:", igData.error);
+            throw new Error(`Failed to fetch profile: ${igData.error.message || "Unknown Error"}`);
         }
 
         console.log(`[Instagram Callback] Successfully fetched profile for: ${igData.username}`);
@@ -131,9 +117,9 @@ export async function GET(request: NextRequest) {
             accessToken: accessToken,
             expiresIn: expiresInSeconds,
             tokenExpiry: tokenExpiry,
-            name: igData.name || "Instagram User",
-            username: igData.username || igData.name || "instagram_user",
-            profilePictureUrl: igData.profile_picture_url || "",
+            name: igData.username || "Instagram User",
+            username: igData.username || "instagram_user",
+            profilePictureUrl: "",
         });
 
         return NextResponse.redirect(new URL("/dashboard/instagram", baseUrl));
