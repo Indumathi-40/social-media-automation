@@ -64,43 +64,62 @@ export async function GET(request: NextRequest) {
     try {
         console.log(`[Instagram Callback] Received code: ${code?.substring(0, 10)}...`);
         // 1. Exchange Code for Access Token
-        // Using the Instagram token endpoint for the branded flow
+        // For Instagram Login for Business, we MUST use the Facebook Graph API token endpoint
         const cleanClientId = clientId.replace(/['"\s]/g, '');
         const cleanClientSecret = clientSecret.replace(/['"\s]/g, '');
         
-        const tokenFormData = new FormData();
-        tokenFormData.append("client_id", cleanClientId);
-        tokenFormData.append("client_secret", cleanClientSecret);
-        tokenFormData.append("grant_type", "authorization_code");
-        tokenFormData.append("redirect_uri", redirectUri);
-        tokenFormData.append("code", code);
-
-        const tokenResponse = await fetch("https://api.instagram.com/oauth/access_token", {
-            method: "POST",
-            body: tokenFormData,
+        const tokenParams = new URLSearchParams({
+            client_id: cleanClientId,
+            client_secret: cleanClientSecret,
+            grant_type: "authorization_code",
+            redirect_uri: redirectUri,
+            code: code,
         });
+
+        console.log("[Instagram Callback] Exchanging code at graph.facebook.com...");
+        const tokenResponse = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?${tokenParams.toString()}`);
 
         const tokenData = await tokenResponse.json();
 
-        if (tokenData.error_message || !tokenData.access_token) {
-            console.error("[Instagram Callback] Token exchange error:", tokenData);
-            throw new Error(tokenData.error_message || "Failed to exchange code for access token");
+        if (tokenData.error || !tokenData.access_token) {
+            console.error("[Instagram Callback] Token exchange error:", tokenData.error || "No access token");
+            throw new Error(tokenData.error?.message || "Failed to exchange code for access token");
         }
 
         let accessToken = tokenData.access_token;
+        console.log("[Instagram Callback] Token exchange successful");
 
         // 2. Fetch Instagram User Details
-        console.log("[Instagram Callback] Fetching profile details from graph.instagram.com...");
-        const igUserUrl = `https://graph.instagram.com/me?fields=id,username&access_token=${accessToken}`;
-        const igResponse = await fetch(igUserUrl);
-        const igData = await igResponse.json();
+        // We try to find the Instagram Business Account linked to the user's Facebook Pages
+        console.log("[Instagram Callback] Fetching linked business accounts...");
+        
+        // Strategy: Fetch user's pages and their associated instagram_business_account
+        const accountsUrl = `https://graph.facebook.com/v21.0/me/accounts?fields=name,instagram_business_account{id,username,name,profile_picture_url}&access_token=${accessToken}`;
+        const accountsResponse = await fetch(accountsUrl);
+        const accountsData = await accountsResponse.json();
 
-        if (igData.error) {
-            console.error("[Instagram Callback] Profile fetch failed:", igData.error);
-            throw new Error(`Failed to fetch profile: ${igData.error.message || "Unknown Error"}`);
+        if (accountsData.error) {
+            console.error("[Instagram Callback] Failed to fetch accounts:", accountsData.error);
+            // Fallback to direct /me check if the account fetch fails (unlikely for business login)
+            const directMeUrl = `https://graph.facebook.com/v21.0/me?fields=id,name,username&access_token=${accessToken}`;
+            const directResponse = await fetch(directMeUrl);
+            const directData = await directResponse.json();
+            if (directData.error) throw new Error(`Failed to fetch profile: ${accountsData.error.message}`);
+            
+            // If we have no business account, we can't really "automate" but we can store the user
+            throw new Error("No Instagram Business Account found. Please ensure your Instagram account is a Professional/Business account and linked to a Facebook Page.");
         }
 
-        console.log(`[Instagram Callback] Successfully fetched profile for: ${igData.username}`);
+        // Find the first Page with a linked Instagram Business Account
+        const pageWithIG = accountsData.data?.find((page: any) => page.instagram_business_account);
+        
+        if (!pageWithIG) {
+            console.error("[Instagram Callback] No linked Instagram Business Account found in pages:", accountsData.data);
+            throw new Error("No Instagram Business Account found. Please ensure your Instagram account is a Professional/Business account and linked to a Facebook Page.");
+        }
+
+        const igData = pageWithIG.instagram_business_account;
+        console.log(`[Instagram Callback] Found Business Account: ${igData.username} (ID: ${igData.id})`);
 
         const expiresInSeconds = 3600; 
         const tokenExpiry = Date.now() + (expiresInSeconds * 1000);
@@ -117,9 +136,10 @@ export async function GET(request: NextRequest) {
             accessToken: accessToken,
             expiresIn: expiresInSeconds,
             tokenExpiry: tokenExpiry,
-            name: igData.username || "Instagram User",
-            username: igData.username || "instagram_user",
-            profilePictureUrl: "",
+            name: igData.name || igData.username || "Instagram User",
+            username: igData.username,
+            profilePictureUrl: igData.profile_picture_url || "",
+            facebookPageId: pageWithIG.id,
         });
 
         return NextResponse.redirect(new URL("/dashboard/instagram", baseUrl));
