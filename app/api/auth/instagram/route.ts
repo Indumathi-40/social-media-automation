@@ -29,14 +29,23 @@ export async function GET(request: Request) {
     console.log(`[Instagram Auth] Initiation - Client ID (Clean): ${cleanClientId}`);
     console.log(`[Instagram Auth] Initiation - Redirect URI: ${redirectUri}`);
 
-    // Use the exact scopes from the working URL provided by the user
-    const scopes = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights";
+    // 4. Use the Facebook Login dialog for Instagram Business
+    // This is more robust for automation apps and handles Business account discovery better
+    const facebookScopes = [
+        "instagram_basic",
+        "instagram_content_publish",
+        "instagram_manage_comments",
+        "instagram_manage_insights",
+        "instagram_manage_messages",
+        "pages_show_list",
+        "pages_read_engagement",
+        "public_profile"
+    ].join(",");
 
-    // 4. Use the exact working Instagram endpoint and parameters provided by the user
-    const url = `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
+    const url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
         redirectUri
-    )}&scope=${scopes}&response_type=code`;
+    )}&scope=${facebookScopes}&response_type=code`;
 
-    console.log(`[Instagram Auth] Full Redirect URL: ${url}`);
+    console.log(`[Instagram Auth] Full Redirect URL (Facebook Flow): ${url}`);
     return NextResponse.redirect(url);
 }
