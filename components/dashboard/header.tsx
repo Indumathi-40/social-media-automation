@@ -7,20 +7,24 @@ import { SocialFlowLogo } from "@/components/landing/logo";
 import { UserButton } from "@clerk/nextjs";
 import { Plus, Sprout, HelpCircle, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MobileNav } from "./mobile-nav";
 
 export function DashboardHeader() {
     const pathname = usePathname();
     return (
         <header className="h-16 border-b bg-background flex items-center justify-between px-4 sticky top-0 z-50">
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2 md:gap-8">
+                {/* Mobile Navigation */}
+                <MobileNav />
+
                 {/* Logo Section */}
-                <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg">
+                <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg shrink-0">
                     <SocialFlowLogo className="h-6 w-6" />
-                    <span>SocialFlow</span>
+                    <span className="hidden sm:inline-block">SocialFlow</span>
                 </Link>
 
-                {/* Main Nav Links */}
-                <nav className="hidden md:flex items-center">
+                {/* Main Nav Links - Hidden on mobile */}
+                <nav className="hidden lg:flex items-center">
                     <Link
                         href="/dashboard/create"
                         className={cn(
@@ -69,22 +73,20 @@ export function DashboardHeader() {
                 </nav>
             </div>
 
-            <div className="flex items-center gap-4">
-
-
-                <div className="flex items-center gap-2 text-muted-foreground">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+            <div className="flex items-center gap-2 md:gap-4">
+                <div className="flex items-center gap-0.5 md:gap-2 text-muted-foreground">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hidden sm:flex">
                         <Sprout className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                         <HelpCircle className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hidden sm:flex">
                         <Gift className="h-4 w-4" />
                     </Button>
                 </div>
 
-                <div className="h-8 w-8 border-l pl-4 ml-2 flex items-center">
+                <div className="h-8 border-l pl-2 md:pl-4 ml-1 md:ml-2 flex items-center">
                     <UserButton afterSignOutUrl="/" />
                 </div>
             </div>

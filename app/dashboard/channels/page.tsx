@@ -142,7 +142,7 @@ export default function AllChannelsPage() {
         <div className="flex flex-col h-full bg-white">
             {/* Top Header */}
             <div className="flex flex-col border-b">
-                <div className="flex items-center justify-between px-6 py-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 gap-4">
                     <div className="flex items-start gap-3">
                         <div className="p-2 bg-gray-100 rounded-lg">
                             <LayoutList className="w-6 h-6 text-gray-600" />
@@ -158,23 +158,23 @@ export default function AllChannelsPage() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <button className="text-gray-400 hover:text-gray-600">
+                    <div className="flex items-center gap-3 self-start sm:self-auto overflow-x-auto w-full sm:w-auto">
+                        <button className="text-gray-400 hover:text-gray-600 shrink-0">
                             <HelpCircle className="w-5 h-5" />
                         </button>
-                        <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+                        <div className="flex items-center bg-gray-100 p-1 rounded-lg shrink-0">
                             <Button variant="ghost" size="sm" className="h-8 bg-white shadow-sm text-purple-600 gap-2">
                                 <LayoutList className="w-4 h-4" />
-                                List
+                                <span className="hidden xs:inline">List</span>
                             </Button>
                             <Button variant="ghost" size="sm" className="h-8 text-gray-600 gap-2">
                                 <CalendarIcon className="w-4 h-4" />
-                                Calendar
+                                <span className="hidden xs:inline">Calendar</span>
                             </Button>
                         </div>
                         <Button
                             onClick={() => setIsCreatePostOpen(true)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md gap-2"
+                            className="bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-md gap-2 shrink-0 ml-auto sm:ml-0"
                         >
                             <Plus className="w-4 h-4" />
                             New Post
@@ -185,13 +185,13 @@ export default function AllChannelsPage() {
 
             {/* Secondary Toolbar & Tabs */}
             <div className="px-6 border-b flex items-center justify-between bg-white">
-                <div className="flex items-center gap-8">
+                <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide">
                     {tabs.map((tab) => (
                         <button
                             key={tab.name}
                             onClick={() => setActiveTab(tab.name)}
                             className={`
-                        relative py-4 text-sm font-medium flex items-center gap-2 transition-colors
+                        relative py-4 text-sm font-medium flex items-center gap-2 transition-colors shrink-0
                         ${activeTab === tab.name ? "text-purple-600" : "text-gray-500 hover:text-gray-700"}
                     `}
                         >
@@ -211,7 +211,7 @@ export default function AllChannelsPage() {
                     ))}
                 </div>
 
-                <div className="flex items-center gap-4 py-2">
+                <div className="hidden sm:flex items-center gap-4 py-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="text-gray-600 gap-1 font-normal">
@@ -290,13 +290,13 @@ export default function AllChannelsPage() {
                                         <h4 className="text-gray-900 font-bold mb-4">{dateLabel}</h4>
                                         <div className="space-y-6">
                                             {posts.map((post) => (
-                                                <div key={post._id} className="flex gap-6 group">
+                                                <div key={post._id} className="flex flex-col sm:flex-row gap-4 sm:gap-6 group">
                                                     {/* Time Column */}
-                                                    <div className="w-[80px] text-right flex-shrink-0 pt-2">
+                                                    <div className="w-full sm:w-[80px] text-left sm:text-right flex-shrink-0 pt-0 sm:pt-2 flex sm:flex-col items-center sm:items-end justify-between sm:justify-start">
                                                         <div className="font-bold text-gray-900 text-sm">
                                                             {new Date(post.scheduledTime || post._creationTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                                                         </div>
-                                                        <div className="text-xs text-gray-400 mt-1 flex items-center justify-end gap-1">
+                                                        <div className="text-xs text-gray-400 sm:mt-1 flex items-center justify-end gap-1">
                                                             <Tag className="w-3 h-3 text-gray-400" />
                                                             Custom
                                                         </div>
@@ -327,7 +327,7 @@ export default function AllChannelsPage() {
                                                                         </span>
                                                                     </div>
 
-                                                                    <div className="flex gap-4 mt-1.5">
+                                                                    <div className="flex flex-col sm:flex-row gap-4 mt-1.5">
                                                                         {/* Text Content */}
                                                                         <div className="flex-1">
                                                                             <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap font-normal">
@@ -337,7 +337,7 @@ export default function AllChannelsPage() {
 
                                                                         {/* Large Image Preview (Right Side) */}
                                                                         {post.mediaUrl && (
-                                                                            <div className="w-[120px] aspect-square bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                                                                            <div className="w-full sm:w-[120px] aspect-square bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
                                                                                 <img src={post.mediaUrl} alt="Post Media" className="w-full h-full object-cover" />
                                                                             </div>
                                                                         )}
@@ -444,19 +444,21 @@ export default function AllChannelsPage() {
                                         <h4 className="text-gray-900 font-bold mb-4">{dateLabel}</h4>
                                         <div className="space-y-6">
                                             {posts.map((post) => (
-                                                <div key={post._id} className="flex gap-6 group">
+                                                <div key={post._id} className="flex flex-col sm:flex-row gap-4 sm:gap-6 group">
                                                     {/* Time & Badges Column */}
-                                                    <div className="w-[80px] text-right flex-shrink-0 pt-2 flex flex-col items-end gap-1">
+                                                    <div className="w-full sm:w-[80px] text-left sm:text-right flex-shrink-0 pt-0 sm:pt-2 flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1">
                                                         <div className="font-bold text-gray-900 text-sm">
                                                             {post.scheduledTime ? new Date(post.scheduledTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : "No Time"}
                                                         </div>
-                                                        <div className="text-xs text-gray-400 flex items-center justify-end gap-1">
-                                                            <div className="w-1.5 h-1.5 rounded-full border border-gray-400 border-dashed"></div>
-                                                            Tentative
-                                                        </div>
-                                                        <div className="bg-pink-50 text-pink-600 text-[10px] font-semibold px-2 py-0.5 rounded border border-pink-100 flex items-center gap-1 mt-1">
-                                                            <Pencil className="w-2.5 h-2.5" />
-                                                            Draft
+                                                        <div className="flex items-center gap-2 sm:flex-col sm:items-end w-full sm:w-auto justify-between sm:justify-start">
+                                                            <div className="text-xs text-gray-400 flex items-center justify-end gap-1 shrink-0">
+                                                                <div className="w-1.5 h-1.5 rounded-full border border-gray-400 border-dashed"></div>
+                                                                Tentative
+                                                            </div>
+                                                            <div className="bg-pink-50 text-pink-600 text-[10px] font-semibold px-2 py-0.5 rounded border border-pink-100 flex items-center gap-1 sm:mt-1 shrink-0">
+                                                                <Pencil className="w-2.5 h-2.5" />
+                                                                Draft
+                                                            </div>
                                                         </div>
                                                     </div>
 
@@ -485,7 +487,7 @@ export default function AllChannelsPage() {
                                                                         </span>
                                                                     </div>
 
-                                                                    <div className="flex gap-4 mt-1.5">
+                                                                    <div className="flex flex-col sm:flex-row gap-4 mt-1.5">
                                                                         {/* Text Content */}
                                                                         <div className="flex-1">
                                                                             <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap font-normal">
@@ -495,12 +497,12 @@ export default function AllChannelsPage() {
 
                                                                         {/* Large Image Preview (Right Side) */}
                                                                         {post.mediaUrl && (
-                                                                            <div className="w-[120px] aspect-square bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                                                                            <div className="w-full sm:w-[120px] aspect-square bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
                                                                                 <img src={post.mediaUrl} alt="Post Media" className="w-full h-full object-cover" />
                                                                             </div>
                                                                         )}
                                                                         {!post.mediaUrl && (
-                                                                            <div className="w-[120px] aspect-square bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center">
+                                                                            <div className="w-full sm:w-[120px] aspect-square bg-gray-50 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100 flex items-center justify-center">
                                                                                 <LayoutList className="w-10 h-10 text-gray-300" />
                                                                             </div>
                                                                         )}
@@ -605,9 +607,9 @@ export default function AllChannelsPage() {
                                         <h4 className="text-gray-900 font-bold mb-4">{dateLabel}</h4>
                                         <div className="space-y-6">
                                             {posts.map((post) => (
-                                                <div key={post._id} className="flex gap-6 group">
+                                                <div key={post._id} className="flex flex-col sm:flex-row gap-4 sm:gap-6 group">
                                                     {/* Time & Badges Column */}
-                                                    <div className="w-[80px] text-right flex-shrink-0 pt-2 flex flex-col items-end gap-1">
+                                                    <div className="w-full sm:w-[80px] text-left sm:text-right flex-shrink-0 pt-0 sm:pt-2 flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1">
                                                         <div className="font-bold text-gray-900 text-sm">
                                                             {new Date(post.updatedAt || post._creationTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                                                         </div>
@@ -638,7 +640,7 @@ export default function AllChannelsPage() {
                                                                         </span>
                                                                     </div>
 
-                                                                    <div className="flex gap-4 mt-1.5">
+                                                                    <div className="flex flex-col sm:flex-row gap-4 mt-1.5">
                                                                         {/* Text Content */}
                                                                         <div className="flex-1">
                                                                             <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap font-normal">
@@ -648,7 +650,7 @@ export default function AllChannelsPage() {
 
                                                                         {/* Large Image Preview (Right Side) */}
                                                                         {post.mediaUrl && (
-                                                                            <div className="w-[120px] aspect-square bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                                                                            <div className="w-full sm:w-[120px] aspect-square bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
                                                                                 <img src={post.mediaUrl} alt="Post Media" className="w-full h-full object-cover" />
                                                                             </div>
                                                                         )}

@@ -420,7 +420,7 @@ export function CreatePostDialog({
                             </Button>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm" className="h-8 gap-2 text-gray-600 hover:text-purple-600 font-medium">
+                            <Button variant="ghost" size="sm" className="h-8 gap-2 text-gray-600 hover:text-purple-600 font-medium hidden sm:flex">
                                 <Wand2 className="w-3.5 h-3.5" />
                                 AI Assistant
                             </Button>
@@ -428,7 +428,7 @@ export function CreatePostDialog({
                                 variant={showPreview ? "default" : "secondary"}
                                 size="sm"
                                 onClick={() => setShowPreview(!showPreview)}
-                                className={`h-8 gap-2 font-medium transition-all ${showPreview
+                                className={`h-8 gap-2 font-medium transition-all hidden lg:flex ${showPreview
                                     ? "bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200"
                                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                     }`}
@@ -475,7 +475,7 @@ export function CreatePostDialog({
                             <div className="p-6 space-y-6">
                                 {/* Channel Selector (Only show if not customizing) */}
                                 {!isCustomizing && (
-                                    <div className="flex items-center gap-3 mb-6">
+                                    <div className="flex flex-wrap items-center gap-3 mb-6">
                                         {/* Linkedin */}
                                         <div
                                             className={`relative group cursor-pointer transition-all duration-200 ${selectedChannels.includes('linkedin') ? 'opacity-100 scale-100' : 'opacity-40 hover:opacity-100 scale-95 hover:scale-100'}`}
@@ -1067,7 +1067,7 @@ export function CreatePostDialog({
                     </div>
 
                     {/* Footer */}
-                    <div className="p-4 border-t bg-white flex items-center justify-between z-10 px-6 shadow-[0_-4px_16px_rgba(0,0,0,0.02)]">
+                    <div className="p-4 border-t bg-white flex flex-col sm:flex-row items-stretch sm:items-center justify-between z-10 px-6 gap-4 shadow-[0_-4px_16px_rgba(0,0,0,0.02)]">
                         <div className="flex items-center gap-2">
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <div className={`w-4 h-4 rounded border transition-colors flex items-center justify-center ${createAnother ? 'bg-blue-600 border-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
@@ -1083,7 +1083,7 @@ export function CreatePostDialog({
                             </label>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-end gap-3">
                             {selectedChannels.length > 1 && !isCustomizing ? (
                                 <Button
                                     onClick={() => {
@@ -1096,13 +1096,13 @@ export function CreatePostDialog({
                                         });
                                         setNetworkData(initialData);
                                     }}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold h-10 px-6 shadow-sm gap-2"
+                                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold h-10 px-6 shadow-sm gap-2"
                                 >
                                     Customize for each network
                                     <ArrowRight className="w-4 h-4" />
                                 </Button>
                             ) : (
-                                <div className="flex items-center p-0.5 bg-gray-100 rounded-lg border border-gray-200">
+                                <div className="flex items-center p-0.5 bg-gray-100 rounded-lg border border-gray-200 w-full sm:w-auto overflow-x-auto whitespace-nowrap">
                                     <input
                                         ref={dateInputRef}
                                         type="datetime-local"
