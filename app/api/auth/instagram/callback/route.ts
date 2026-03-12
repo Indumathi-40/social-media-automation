@@ -119,6 +119,7 @@ export async function GET(request: NextRequest) {
                 const pagesData = await pagesResponse.json();
                 
                 if (pagesData.data && pagesData.data.length > 0) {
+                    console.log(`[Instagram Callback] Found ${pagesData.data.length} Facebook pages. Searching for linked IG account...`);
                     // Look for the first page that has a linked Instagram Business Account
                     for (const page of pagesData.data) {
                         if (page.instagram_business_account) {
@@ -133,11 +134,19 @@ export async function GET(request: NextRequest) {
                             break;
                         }
                     }
+                    
+                    if (!igData) {
+                        console.warn("[Instagram Callback] Pages found, but none have a linked Instagram Business Account.");
+                        throw new Error("We found your Facebook Pages, but none of them are linked to an Instagram Business account. Please link your Instagram to a Facebook Page in your Page Settings.");
+                    }
                 } else if (pagesData.error) {
                     console.error("[Instagram Callback] Pages API failed:", pagesData.error.message);
+                } else {
+                     console.warn("[Instagram Callback] No Facebook pages found for this user.");
                 }
-            } catch (e) {
-                console.error("[Instagram Callback] Pages discovery failed:", e);
+            } catch (e: any) {
+                console.error("[Instagram Callback] Pages discovery failed:", e.message);
+                if (e.message.includes("Facebook Page")) throw e; // Carry forward the specific linking error
             }
         }
 
@@ -148,7 +157,7 @@ export async function GET(request: NextRequest) {
             const fbData = await fbResponse.json();
             if (fbData.error) {
                 console.error("[Instagram Callback] All discovery strategies failed.");
-                throw new Error("Unable to identify your Instagram Business account. Please ensure your Instagram account is linked to a Facebook Page.");
+                throw new Error("Unable to identify your Instagram Business account. Requirement: 1. Use a Professional Account. 2. Link it to a Facebook Page. 3. Grant 'Manage Pages' permission when connecting.");
             }
             igData = { 
                 id: fbData.id, 
