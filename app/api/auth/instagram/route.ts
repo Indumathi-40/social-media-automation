@@ -32,12 +32,28 @@ export async function GET(request: Request) {
     // Updated scopes for Instagram Business + discovery
     const scopes = "instagram_basic,instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights,pages_show_list,pages_read_engagement,public_profile";
 
-    // 4. Use the Meta (Facebook) Login flow for Professional accounts
-    // This fixes the "Invalid platform app" error seen on the instagram.com endpoint
-    const url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
+    // 4. Determine which flow to use based on the App ID or desired account type
+    // If you have a Meta (Facebook) App ID, use the Facebook Dialog for Professional accounts
+    // If you have an Instagram Basic Display ID, use the Instagram Dialog (Personal only)
+    
+    // Most professional integrations use the Facebook Dialog
+    const isMetaApp = cleanClientId && cleanClientId.length >= 15;
+    
+    // We'll use the Facebook flow as primary for Business/Official accounts
+    const facebookUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
         redirectUri
     )}&scope=${scopes}&response_type=code&auth_type=reauthenticate`;
 
+    // Legacy/Basic Instagram flow (Personal accounts only)
+    const instagramUrl = `https://api.instagram.com/oauth/authorize?client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
+        redirectUri
+    )}&scope=user_profile,user_media&response_type=code`;
+
+    // Strategy: Default to Facebook flow for Business, but provide easy switching if needed
+    const url = facebookUrl;
+
+    console.log(`[Instagram Auth] Flow: Meta/Facebook Business`);
     console.log(`[Instagram Auth] Full Redirect URL: ${url}`);
+    
     return NextResponse.redirect(url);
 }

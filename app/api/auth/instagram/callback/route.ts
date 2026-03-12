@@ -64,27 +64,59 @@ export async function GET(request: NextRequest) {
     try {
         console.log(`[Instagram Callback] Received code: ${code?.substring(0, 10)}...`);
         // 1. Exchange Code for Access Token
-        // Using the Facebook Graph API token endpoint for the Meta Login flow
+        // We try both the Meta (Facebook) and Instagram endpoints to support both App ID types
         const cleanClientId = clientId.replace(/['"\s]/g, '');
         const cleanClientSecret = clientSecret.replace(/['"\s]/g, '');
         
-        const tokenParams = new URLSearchParams({
-            client_id: cleanClientId,
-            client_secret: cleanClientSecret,
-            grant_type: "authorization_code",
-            redirect_uri: redirectUri,
-            code: code
-        });
+        let accessToken = "";
+        let tokenData: any = {};
 
-        const tokenResponse = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?${tokenParams.toString()}`);
-        const tokenData = await tokenResponse.json();
-
-        if (tokenData.error_message || !tokenData.access_token) {
-            console.error("[Instagram Callback] Token exchange error:", tokenData);
-            throw new Error(tokenData.error_message || "Failed to exchange code for access token");
+        // Try Strategy 1: Meta/Facebook Graph API (For Professional accounts)
+        try {
+            const tokenParams = new URLSearchParams({
+                client_id: cleanClientId,
+                client_secret: cleanClientSecret,
+                grant_type: "authorization_code",
+                redirect_uri: redirectUri,
+                code: code
+            });
+            const response = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?${tokenParams.toString()}`);
+            tokenData = await response.json();
+            accessToken = tokenData.access_token;
+        } catch (e) {
+            console.warn("[Instagram Callback] Facebook token exchange failed:", e);
         }
 
-        let accessToken = tokenData.access_token;
+        // Try Strategy 2: Instagram API (For Personal/Basic Display accounts)
+        if (!accessToken) {
+            console.log("[Instagram Callback] Trying Instagram Legacy token exchange...");
+            const tokenFormData = new FormData();
+            tokenFormData.append("client_id", cleanClientId);
+            tokenFormData.append("client_secret", cleanClientSecret);
+            tokenFormData.append("grant_type", "authorization_code");
+            tokenFormData.append("redirect_uri", redirectUri);
+            tokenFormData.append("code", code);
+
+            try {
+                const response = await fetch("https://api.instagram.com/oauth/access_token", {
+                    method: "POST",
+                    body: tokenFormData,
+                });
+                tokenData = await response.json();
+                accessToken = tokenData.access_token;
+            } catch (e) {
+                console.error("[Instagram Callback] Instagram token exchange failed:", e);
+            }
+        }
+
+        if (!accessToken) {
+            const errorMsg = tokenData.error_message || tokenData.error?.message || "Verify your App ID and Secret in .env";
+            console.error("[Instagram Callback] All token exchange strategies failed:", tokenData);
+            return NextResponse.redirect(
+                new URL(`/dashboard/instagram?error=Token+Exchange+Failed:+${encodeURIComponent(errorMsg)}`, baseUrl)
+            );
+        }
+
         let igData: any = null;
 
         // 2. Fetch Instagram User Details
