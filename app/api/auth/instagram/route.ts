@@ -29,31 +29,14 @@ export async function GET(request: Request) {
     console.log(`[Instagram Auth] Initiation - Client ID (Clean): ${cleanClientId}`);
     console.log(`[Instagram Auth] Initiation - Redirect URI: ${redirectUri}`);
 
-    // Updated scopes for Instagram Business + discovery
-    const scopes = "instagram_basic,instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights,pages_show_list,pages_read_engagement,public_profile";
+    // Use the exact scopes from the working URL provided by the user
+    const scopes = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights";
 
-    // 4. Determine which flow to use based on the App ID or desired account type
-    // If you have a Meta (Facebook) App ID, use the Facebook Dialog for Professional accounts
-    // If you have an Instagram Basic Display ID, use the Instagram Dialog (Personal only)
-    
-    // Most professional integrations use the Facebook Dialog
-    const isMetaApp = cleanClientId && cleanClientId.length >= 15;
-    
-    // We'll use the Facebook flow as primary for Business/Official accounts
-    const facebookUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
+    // 4. Use the exact working Instagram endpoint and parameters provided by the user
+    const url = `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
         redirectUri
-    )}&scope=${scopes}&response_type=code&auth_type=reauthenticate`;
+    )}&scope=${scopes}&response_type=code`;
 
-    // Legacy/Basic Instagram flow (Personal accounts only)
-    const instagramUrl = `https://api.instagram.com/oauth/authorize?client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
-        redirectUri
-    )}&scope=user_profile,user_media&response_type=code`;
-
-    // Strategy: Default to Facebook flow for Business, but provide easy switching if needed
-    const url = facebookUrl;
-
-    console.log(`[Instagram Auth] Flow: Meta/Facebook Business`);
     console.log(`[Instagram Auth] Full Redirect URL: ${url}`);
-    
     return NextResponse.redirect(url);
 }

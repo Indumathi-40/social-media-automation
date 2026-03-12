@@ -64,59 +64,30 @@ export async function GET(request: NextRequest) {
     try {
         console.log(`[Instagram Callback] Received code: ${code?.substring(0, 10)}...`);
         // 1. Exchange Code for Access Token
-        // We try both the Meta (Facebook) and Instagram endpoints to support both App ID types
+        // Using the Instagram token endpoint for the branded flow
         const cleanClientId = clientId.replace(/['"\s]/g, '');
         const cleanClientSecret = clientSecret.replace(/['"\s]/g, '');
         
-        let accessToken = "";
-        let tokenData: any = {};
+        const tokenFormData = new FormData();
+        tokenFormData.append("client_id", cleanClientId);
+        tokenFormData.append("client_secret", cleanClientSecret);
+        tokenFormData.append("grant_type", "authorization_code");
+        tokenFormData.append("redirect_uri", redirectUri);
+        tokenFormData.append("code", code);
 
-        // Try Strategy 1: Meta/Facebook Graph API (For Professional accounts)
-        try {
-            const tokenParams = new URLSearchParams({
-                client_id: cleanClientId,
-                client_secret: cleanClientSecret,
-                grant_type: "authorization_code",
-                redirect_uri: redirectUri,
-                code: code
-            });
-            const response = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?${tokenParams.toString()}`);
-            tokenData = await response.json();
-            accessToken = tokenData.access_token;
-        } catch (e) {
-            console.warn("[Instagram Callback] Facebook token exchange failed:", e);
+        const tokenResponse = await fetch("https://api.instagram.com/oauth/access_token", {
+            method: "POST",
+            body: tokenFormData,
+        });
+
+        const tokenData = await tokenResponse.json();
+
+        if (tokenData.error_message || !tokenData.access_token) {
+            console.error("[Instagram Callback] Token exchange error:", tokenData);
+            throw new Error(tokenData.error_message || "Failed to exchange code for access token");
         }
 
-        // Try Strategy 2: Instagram API (For Personal/Basic Display accounts)
-        if (!accessToken) {
-            console.log("[Instagram Callback] Trying Instagram Legacy token exchange...");
-            const tokenFormData = new FormData();
-            tokenFormData.append("client_id", cleanClientId);
-            tokenFormData.append("client_secret", cleanClientSecret);
-            tokenFormData.append("grant_type", "authorization_code");
-            tokenFormData.append("redirect_uri", redirectUri);
-            tokenFormData.append("code", code);
-
-            try {
-                const response = await fetch("https://api.instagram.com/oauth/access_token", {
-                    method: "POST",
-                    body: tokenFormData,
-                });
-                tokenData = await response.json();
-                accessToken = tokenData.access_token;
-            } catch (e) {
-                console.error("[Instagram Callback] Instagram token exchange failed:", e);
-            }
-        }
-
-        if (!accessToken) {
-            const errorMsg = tokenData.error_message || tokenData.error?.message || "Verify your App ID and Secret in .env";
-            console.error("[Instagram Callback] All token exchange strategies failed:", tokenData);
-            return NextResponse.redirect(
-                new URL(`/dashboard/instagram?error=Token+Exchange+Failed:+${encodeURIComponent(errorMsg)}`, baseUrl)
-            );
-        }
-
+        let accessToken = tokenData.access_token;
         let igData: any = null;
 
         // 2. Fetch Instagram User Details
@@ -141,14 +112,14 @@ export async function GET(request: NextRequest) {
         // --- Strategy B: Find via Pages (Standard Instagram Business API) ---
         if (!igData) {
             try {
-                // If direct fail, this is likely a Business token. 
-                // We need to find the linked Instagram Business account via the user's pages.
-                const pagesUrl = `https://graph.facebook.com/v21.0/me/accounts?fields=instagram_business_account{id,username,name,profile_picture_url},name,access_token&access_token=${accessToken}`;
+                console.log("[Instagram Callback] Probing Facebook Pages for linked IG Business accounts...");
+                const pagesUrl = `https://graph.facebook.com/v21.0/me/accounts?fields=instagram_business_account{id,username,name,profile_picture_url},name&access_token=${accessToken}`;
                 const pagesResponse = await fetch(pagesUrl);
                 const pagesData = await pagesResponse.json();
                 
-                if (pagesData.data && pagesData.data.length > 0) {
-                    console.log(`[Instagram Callback] Found ${pagesData.data.length} Facebook pages. Searching for linked IG account...`);
+                if (pagesData.data) {
+                    console.log(`[Instagram Callback] Found ${pagesData.data.length} Facebook Pages.`);
+                    
                     // Look for the first page that has a linked Instagram Business Account
                     for (const page of pagesData.data) {
                         if (page.instagram_business_account) {
@@ -159,44 +130,53 @@ export async function GET(request: NextRequest) {
                                 profile_picture_url: page.instagram_business_account.profile_picture_url,
                                 facebook_page_id: page.id
                             };
-                            console.log(`[Instagram Callback] Found Business Account via Page: ${igData.username}`);
+                            console.log(`[Instagram Callback] Found linked IG Business account "${igData.username}" on Page "${page.name}"`);
                             break;
+                        } else {
+                            console.log(`[Instagram Callback] Page "${page.name}" has no linked IG Business account.`);
                         }
                     }
-                    
-                    if (!igData) {
-                        console.warn("[Instagram Callback] Pages found, but none have a linked Instagram Business Account.");
-                        throw new Error("We found your Facebook Pages, but none of them are linked to an Instagram Business account. Please link your Instagram to a Facebook Page in your Page Settings.");
+
+                    if (!igData && pagesData.data.length > 0) {
+                        console.warn("[Instagram Callback] Found pages, but none have a linked Instagram Business account.");
                     }
                 } else if (pagesData.error) {
                     console.error("[Instagram Callback] Pages API failed:", pagesData.error.message);
-                } else {
-                     console.warn("[Instagram Callback] No Facebook pages found for this user.");
                 }
-            } catch (e: any) {
-                console.error("[Instagram Callback] Pages discovery failed:", e.message);
-                if (e.message.includes("Facebook Page")) throw e; // Carry forward the specific linking error
+            } catch (e) {
+                console.error("[Instagram Callback] Pages discovery threw exception:", e);
             }
         }
 
-        // --- Strategy C: Last Resort (Legacy /me) ---
+        // --- Strategy C: Fallback to Basic Profile ---
         if (!igData) {
-            const fbMeUrl = `https://graph.facebook.com/v21.0/me?fields=id,name,username,profile_picture_url&access_token=${accessToken}`;
-            const fbResponse = await fetch(fbMeUrl);
-            const fbData = await fbResponse.json();
-            if (fbData.error) {
-                console.error("[Instagram Callback] All discovery strategies failed.");
-                throw new Error("Unable to identify your Instagram Business account. Requirement: 1. Use a Professional Account. 2. Link it to a Facebook Page. 3. Grant 'Manage Pages' permission when connecting.");
+            try {
+                console.log("[Instagram Callback] Attempting last-resort basic profile fetch...");
+                const fbMeUrl = `https://graph.facebook.com/v21.0/me?fields=id,name,username,profile_picture_url&access_token=${accessToken}`;
+                const fbResponse = await fetch(fbMeUrl);
+                const fbData = await fbResponse.json();
+                
+                if (!fbData.error) {
+                    igData = { 
+                        id: fbData.id, 
+                        username: fbData.username || fbData.name?.toLowerCase().replace(/\s/g, '_'),
+                        name: fbData.name,
+                        profile_picture_url: fbData.profile_picture_url?.data?.url || fbData.profile_picture_url
+                    };
+                    console.log("[Instagram Callback] Found basic profile via Strategy C");
+                } else {
+                    console.error("[Instagram Callback] All discovery strategies failed.", fbData.error);
+                }
+            } catch (e) {
+                console.error("[Instagram Callback] Strategy C exception:", e);
             }
-            igData = { 
-                id: fbData.id, 
-                username: fbData.username || fbData.name?.toLowerCase().replace(/\s/g, '_'),
-                name: fbData.name,
-                profile_picture_url: fbData.profile_picture_url?.data?.url || fbData.profile_picture_url
-            };
         }
 
-        console.log(`[Instagram Callback] Successfully identified: ${igData.username} (${igData.id})`);
+        if (!igData) {
+            throw new Error("Unable to identify which Instagram account you want to connect. Please ensure: 1. Your Instagram is a 'Business' or 'Creator' account. 2. It is linked to a Facebook Page. 3. You granted permission for that Page during login.");
+        }
+
+        console.log(`[Instagram Callback] Final identification: ${igData.username} (${igData.id})`);
 
         const expiresInSeconds = 3600; 
         const tokenExpiry = Date.now() + (expiresInSeconds * 1000);
