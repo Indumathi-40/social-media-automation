@@ -64,22 +64,19 @@ export async function GET(request: NextRequest) {
     try {
         console.log(`[Instagram Callback] Received code: ${code?.substring(0, 10)}...`);
         // 1. Exchange Code for Access Token
-        // Using the Instagram token endpoint for the branded flow
+        // Using the Facebook Graph API token endpoint for the Meta Login flow
         const cleanClientId = clientId.replace(/['"\s]/g, '');
         const cleanClientSecret = clientSecret.replace(/['"\s]/g, '');
         
-        const tokenFormData = new FormData();
-        tokenFormData.append("client_id", cleanClientId);
-        tokenFormData.append("client_secret", cleanClientSecret);
-        tokenFormData.append("grant_type", "authorization_code");
-        tokenFormData.append("redirect_uri", redirectUri);
-        tokenFormData.append("code", code);
-
-        const tokenResponse = await fetch("https://api.instagram.com/oauth/access_token", {
-            method: "POST",
-            body: tokenFormData,
+        const tokenParams = new URLSearchParams({
+            client_id: cleanClientId,
+            client_secret: cleanClientSecret,
+            grant_type: "authorization_code",
+            redirect_uri: redirectUri,
+            code: code
         });
 
+        const tokenResponse = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?${tokenParams.toString()}`);
         const tokenData = await tokenResponse.json();
 
         if (tokenData.error_message || !tokenData.access_token) {

@@ -32,11 +32,11 @@ export async function GET(request: Request) {
     // Updated scopes for Instagram Business + discovery
     const scopes = "instagram_basic,instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights,pages_show_list,pages_read_engagement,public_profile";
 
-    // 4. Use the exact working Instagram endpoint and parameters
-    // Added auth_type=reauthenticate to help with account switching
-    const url = `https://www.instagram.com/oauth/authorize?force_reauth=true&auth_type=reauthenticate&client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
+    // 4. Use the Meta (Facebook) Login flow for Professional accounts
+    // This fixes the "Invalid platform app" error seen on the instagram.com endpoint
+    const url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${cleanClientId}&redirect_uri=${encodeURIComponent(
         redirectUri
-    )}&scope=${scopes}&response_type=code`;
+    )}&scope=${scopes}&response_type=code&auth_type=reauthenticate`;
 
     console.log(`[Instagram Auth] Full Redirect URL: ${url}`);
     return NextResponse.redirect(url);
