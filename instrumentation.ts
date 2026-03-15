@@ -8,11 +8,11 @@ export async function register() {
             if (!isNgrok) {
                 console.error("\n\n");
                 console.error("===============================================================");
-                console.error("🚨 CRITICAL CONFIG ERROR: LIVE TUNNEL REQUIRED FOR TWITTER OAUTH");
+                console.error("🚨 CONFIG WARNING: LIVE TUNNEL RECOMMENDED FOR OAUTH");
                 console.error("===============================================================");
                 console.error(`Current NEXT_PUBLIC_APP_URL: ${appUrl || "(not set)"}`);
                 console.error("");
-                console.error("Twitter OAuth 2.0 REQUIRES a public HTTPS URL.");
+                console.error("Some OAuth providers require a public HTTPS URL.");
                 console.error("1. Start ngrok: 'ngrok http 3000'");
                 console.error("2. Update .env: NEXT_PUBLIC_APP_URL=https://your-id.ngrok-free.app");
                 console.error("3. Restart this server.");

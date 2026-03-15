@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Linkedin, Instagram, Twitter, Heart, MessageSquare, MoreVertical } from "lucide-react";
+import { Linkedin, Instagram, Heart, MessageSquare, MoreVertical } from "lucide-react";
 import Image from "next/image";
 
 export function RecentActivity() {
@@ -25,18 +25,6 @@ export function RecentActivity() {
             likes: "1.2k",
             comments: 82,
             time: "4h ago"
-        },
-        {
-            content: "5 tips for better social media engagement in 2024",
-            image: "/placeholder-post-3.png",
-            platform: "Twitter",
-            platformIcon: Twitter,
-            platformColor: "text-sky-500",
-            status: "Scheduled",
-            statusColor: "bg-yellow-100 text-yellow-700",
-            likes: "-",
-            comments: "-",
-            time: "Tomorrow"
         }
     ];
 

@@ -62,7 +62,7 @@ import { Pencil } from "lucide-react";
 interface CreatePostDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    initialChannel?: "instagram" | "linkedin" | "twitter" | "all";
+    initialChannel?: "instagram" | "linkedin" | "all";
     instagramConnected?: boolean;
     linkedinConnected?: boolean;
     post?: any; // Optional post object for editing
