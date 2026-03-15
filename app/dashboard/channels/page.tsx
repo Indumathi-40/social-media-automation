@@ -16,7 +16,6 @@ import {
     Clock,
     Clapperboard,
     Linkedin,
-    Twitter,
     Pencil,
     Zap,
     Trash2,
@@ -53,7 +52,6 @@ export default function AllChannelsPage() {
     // For now, mirroring the Instagram/LinkedIn pattern
     const performInstaPublish = useAction(api.instagram.debugPublishPost);
     const performLinkedinPublish = useAction(api.linkedin.debugPublishPost);
-    const performTwitterPublish = useAction(api.twitter.publishPost);
 
     const [editingPost, setEditingPost] = useState<any>(null);
 
@@ -86,7 +84,6 @@ export default function AllChannelsPage() {
             try {
                 if (post.platform === "instagram") await performInstaPublish({ postId: post._id });
                 else if (post.platform === "linkedin") await performLinkedinPublish({ postId: post._id });
-                else if (post.platform === "twitter") await performTwitterPublish({ postId: post._id });
                 alert("Published!");
             } catch (e) {
                 alert("Failed to publish: " + e);
@@ -315,7 +312,6 @@ export default function AllChannelsPage() {
                                                                 <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0 flex items-center justify-center shadow-sm border border-gray-100 overflow-hidden w-4 h-4">
                                                                     {post.platform === "instagram" && <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" className="w-full h-full object-cover" alt="Instagram" />}
                                                                     {post.platform === "linkedin" && <Linkedin className="h-3 w-3 text-blue-700 fill-current" />}
-                                                                    {post.platform === "twitter" && <Twitter className="h-3 w-3 text-sky-500 fill-current" />}
                                                                 </div>
                                                             </div>
 
@@ -475,7 +471,6 @@ export default function AllChannelsPage() {
                                                                 <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0 flex items-center justify-center shadow-sm border border-gray-100 overflow-hidden w-4 h-4">
                                                                     {post.platform === "instagram" && <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" className="w-full h-full object-cover" alt="Instagram" />}
                                                                     {post.platform === "linkedin" && <Linkedin className="h-3 w-3 text-blue-700 fill-current" />}
-                                                                    {post.platform === "twitter" && <Twitter className="h-3 w-3 text-sky-500 fill-current" />}
                                                                 </div>
                                                             </div>
 
@@ -628,7 +623,6 @@ export default function AllChannelsPage() {
                                                                 <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0 flex items-center justify-center shadow-sm border border-gray-100 overflow-hidden w-4 h-4">
                                                                     {post.platform === "instagram" && <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" className="w-full h-full object-cover" alt="Instagram" />}
                                                                     {post.platform === "linkedin" && <Linkedin className="h-3 w-3 text-blue-700 fill-current" />}
-                                                                    {post.platform === "twitter" && <Twitter className="h-3 w-3 text-sky-500 fill-current" />}
                                                                 </div>
                                                             </div>
 

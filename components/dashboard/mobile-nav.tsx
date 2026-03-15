@@ -9,7 +9,6 @@ import {
     Grid, 
     Instagram, 
     Linkedin, 
-    Twitter, 
     Settings, 
     SlidersHorizontal,
     Plus,
@@ -44,7 +43,6 @@ export function MobileNav() {
         { href: "/dashboard/channels", label: "All Channels", icon: Grid },
         { href: "/dashboard/instagram", label: "Instagram", icon: Instagram, color: "text-pink-500" },
         { href: "/dashboard/linkedin", label: "LinkedIn", icon: Linkedin, color: "text-blue-700" },
-        { href: "/dashboard/twitter", label: "X (Twitter)", icon: Twitter },
     ];
 
     const bottomLinks = [

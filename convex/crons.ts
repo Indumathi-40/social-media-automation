@@ -10,12 +10,6 @@ crons.interval(
 );
 
 crons.interval(
-    "publish-twitter-posts",
-    { minutes: 1 },
-    internal.twitter.publishPendingPosts
-);
-
-crons.interval(
     "publish-instagram-posts",
     { minutes: 1 },
     internal.instagram.publishPendingPosts

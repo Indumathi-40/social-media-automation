@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Grid, Instagram, Linkedin, Twitter, Settings, SlidersHorizontal, ListTodo, Send, FileEdit } from "lucide-react";
+import { LayoutGrid, Grid, Instagram, Linkedin, Settings, SlidersHorizontal, ListTodo, Send, FileEdit } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Convex & Clerk Integrations
@@ -90,16 +90,6 @@ export function DashboardSidebar() {
                             LinkedIn
                         </Link>
 
-                        {/* Twitter */}
-                        <Link
-                            href="/dashboard/twitter"
-                            className={getLinkClass("/dashboard/twitter")}
-                        >
-                            <svg viewBox="0 0 24 24" aria-hidden="true" className={cn("h-4 w-4 fill-current", isMounted && pathname === "/dashboard/twitter" ? "text-purple-700" : "")}>
-                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-                            </svg>
-                            X (Twitter)
-                        </Link>
                     </div>
                 </div>
 

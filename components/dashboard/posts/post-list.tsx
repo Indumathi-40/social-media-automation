@@ -3,7 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent } from "@/components/ui/card";
-import { Linkedin, Instagram, Twitter, Calendar, Clock, MoreHorizontal, Pencil, Trash2, Send, FileEdit } from "lucide-react";
+import { Linkedin, Instagram, Calendar, Clock, MoreHorizontal, Pencil, Trash2, Send, FileEdit } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -56,7 +56,6 @@ export function PostList({ status, title, description }: PostListProps) {
                                     <div className="flex-shrink-0 pt-1">
                                         {post.platform === "linkedin" && <div className="bg-[#0077b5] p-1.5 rounded-lg"><Linkedin className="w-5 h-5 text-white fill-current" /></div>}
                                         {post.platform === "instagram" && <div className="bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] p-1.5 rounded-lg"><Instagram className="w-5 h-5 text-white" /></div>}
-                                        {post.platform === "twitter" && <div className="bg-black p-1.5 rounded-lg"><Twitter className="w-5 h-5 text-white fill-current" /></div>}
                                     </div>
 
                                     <div className="flex-1 min-w-0">

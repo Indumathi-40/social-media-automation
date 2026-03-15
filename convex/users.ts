@@ -45,52 +45,6 @@ export const syncLinkedinConnection = mutation({
                 clerkId: args.clerkId,
                 ...updateData,
                 instagramConnected: false,
-                twitterConnected: false,
-            });
-        }
-    },
-});
-
-// Sync Twitter Connection
-export const syncTwitterConnection = mutation({
-    args: {
-        clerkId: v.string(),
-        connectionId: v.string(),
-        username: v.string(),
-        avatar: v.optional(v.string()),
-        name: v.optional(v.string()), // Added
-    },
-    handler: async (ctx, args) => {
-        const existingUser = await ctx.db
-            .query("users")
-            .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
-            .first();
-
-        const now = Date.now();
-
-        const updateData = {
-            twitterConnectionId: args.connectionId,
-            twitterUsername: args.username,
-            twitterAvatar: args.avatar,
-            twitterConnected: true,
-            twitterLastConnectedAt: now,
-            twitterProfile: {
-                id: args.connectionId,
-                username: args.username,
-                name: args.name || args.username,
-                imageUrl: args.avatar,
-            },
-            updatedAt: now,
-        };
-
-        if (existingUser) {
-            await ctx.db.patch(existingUser._id, updateData);
-        } else {
-            await ctx.db.insert("users", {
-                clerkId: args.clerkId,
-                ...updateData,
-                instagramConnected: false,
-                linkedinConnected: false,
             });
         }
     },
@@ -144,33 +98,6 @@ export const disconnectLinkedin = mutation({
     },
 });
 
-// Disconnect Twitter
-export const disconnectTwitter = mutation({
-    args: { clerkId: v.string() },
-    handler: async (ctx, args) => {
-        const existingUser = await ctx.db
-            .query("users")
-            .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
-            .first();
-
-        if (existingUser) {
-            await ctx.db.patch(existingUser._id, {
-                twitterConnected: false,
-                twitterLastDisconnectedAt: Date.now(),
-            });
-        }
-
-        // Also remove the connection record so getConnection returns null
-        const connection = await ctx.db
-            .query("twitter_connections")
-            .withIndex("by_userId", (q) => q.eq("userId", args.clerkId))
-            .first();
-
-        if (connection) {
-            await ctx.db.delete(connection._id);
-        }
-    },
-});
 
 
 export const getUser = query({
@@ -217,7 +144,6 @@ export const storeUser = mutation({
             imageUrl: args.imageUrl,
             instagramConnected: false,
             linkedinConnected: false,
-            twitterConnected: false,
             updatedAt: now,
         });
         return newUserId;

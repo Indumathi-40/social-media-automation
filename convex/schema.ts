@@ -42,20 +42,7 @@ export default defineSchema({
             email: v.optional(v.string()),
         })),
 
-        // Twitter Connection
-        twitterConnectionId: v.optional(v.string()),
-        twitterUsername: v.optional(v.string()),
-        twitterAvatar: v.optional(v.string()),
-        twitterConnected: v.boolean(),
-        twitterLastConnectedAt: v.optional(v.number()), // NEW
-        twitterLastDisconnectedAt: v.optional(v.number()), // NEW
-        twitterProfile: v.optional(v.object({ // NEW
-            id: v.string(),
-            username: v.string(),
-            name: v.string(),
-            imageUrl: v.optional(v.string()),
-        })),
-
+        // Legacy / Other
         updatedAt: v.number(),
     }).index("by_clerkId", ["clerkId"])
         .index("by_instagramUserId", ["instagramUserId"]), // Efficient lookup by Platform ID
@@ -100,24 +87,6 @@ export default defineSchema({
         updatedAt: v.number(),
     }).index("by_userId", ["userId"])
         .index("by_linkedinMemberId", ["linkedinMemberId"]),
-
-    twitter_connections: defineTable({
-        userId: v.string(), // users.clerkId
-        twitterUserId: v.string(), // Twitter User ID
-
-        // Auth Tokens (Never exposed to client)
-        accessToken: v.string(),
-        expiresIn: v.number(), // Seconds until expiration
-        refreshToken: v.optional(v.string()),
-
-        // Metadata
-        username: v.string(),
-        name: v.string(),
-        profileImageUrl: v.optional(v.string()),
-
-        updatedAt: v.number(),
-    }).index("by_userId", ["userId"])
-        .index("by_twitterUserId", ["twitterUserId"]),
 
     posts: defineTable({
         userId: v.string(),

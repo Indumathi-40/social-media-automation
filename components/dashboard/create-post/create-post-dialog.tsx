@@ -65,7 +65,6 @@ interface CreatePostDialogProps {
     initialChannel?: "instagram" | "linkedin" | "twitter" | "all";
     instagramConnected?: boolean;
     linkedinConnected?: boolean;
-    twitterConnected?: boolean;
     post?: any; // Optional post object for editing
 }
 
@@ -81,7 +80,6 @@ export function CreatePostDialog({
     initialChannel = "instagram",
     instagramConnected = false,
     linkedinConnected = false,
-    twitterConnected = false,
     post
 }: CreatePostDialogProps) {
     const [text, setText] = useState("");
@@ -109,8 +107,7 @@ export function CreatePostDialog({
     const [activeCustomizationChannel, setActiveCustomizationChannel] = useState<string | null>(null);
     const [networkData, setNetworkData] = useState<Record<string, { text: string; uploadedFiles: UploadedFile[] }>>({
         linkedin: { text: "", uploadedFiles: [] },
-        instagram: { text: "", uploadedFiles: [] },
-        twitter: { text: "", uploadedFiles: [] }
+        instagram: { text: "", uploadedFiles: [] }
     });
 
     const generateUploadUrl = useMutation(api.files.generateUploadUrl);
@@ -132,7 +129,6 @@ export function CreatePostDialog({
     // Fetch platform connections for profile previews
     const linkedinConnection = useQuery(api.linkedin.getConnection);
     const instagramConnection = useQuery(api.instagram.getConnection);
-    const twitterConnection = useQuery(api.twitter.getConnection);
 
     // Track active platform specific info
     const linkedinProfile = linkedinConnection ? {
@@ -151,21 +147,9 @@ export function CreatePostDialog({
         image: user?.imageUrl
     };
 
-    const twitterProfile = twitterConnection ? {
-        name: twitterConnection.name,
-        username: twitterConnection.username,
-        image: twitterConnection.profileImageUrl
-    } : {
-        name: user?.fullName || "Twitter User",
-        username: user?.username || user?.fullName?.toLowerCase().replace(/\s/g, '') || "user",
-        image: user?.imageUrl
-    };
-
     // Mutations
     const createLinkedInPost = useMutation(api.linkedin.createPost);
     const updateLinkedInPost = useMutation(api.linkedin.updatePost);
-    const createTwitterPost = useMutation(api.twitter.createPost);
-    const updateTwitterPost = useMutation(api.twitter.updatePost);
     const createInstagramPost = useMutation(api.instagram.createPost);
     const updateInstagramPost = useMutation(api.instagram.updatePost);
 
@@ -211,7 +195,7 @@ export function CreatePostDialog({
     useEffect(() => {
         if (open) {
             if (initialChannel === "all") {
-                setSelectedChannels(["instagram", "linkedin", "twitter"]);
+                setSelectedChannels(["instagram", "linkedin"]);
             } else {
                 setSelectedChannels([initialChannel]);
             }
@@ -234,7 +218,6 @@ export function CreatePostDialog({
 
     const isSingleInstagram = selectedChannels.length === 1 && selectedChannels.includes("instagram");
     const isSingleLinkedin = selectedChannels.length === 1 && selectedChannels.includes("linkedin");
-    const isSingleTwitter = selectedChannels.length === 1 && selectedChannels.includes("twitter");
     const showGenericUI = selectedChannels.length !== 1;
 
     const handleClose = () => {
@@ -341,12 +324,6 @@ export function CreatePostDialog({
                     } else {
                         await createLinkedInPost({ content: channelText, scheduledTime: finalScheduledTime, mediaStorageIds: finalStorageIds, mediaUrls: [], status: status });
                     }
-                } else if (channel === 'twitter') {
-                    if (post) {
-                        await updateTwitterPost({ postId: post._id, content: channelText, scheduledTime: finalScheduledTime, mediaStorageIds: finalStorageIds, status: status });
-                    } else {
-                        await createTwitterPost({ content: channelText, scheduledTime: finalScheduledTime, mediaStorageIds: finalStorageIds, mediaUrls: [], status: status });
-                    }
                 } else if (channel === 'instagram') {
                     if (post) {
                         await updateInstagramPost({ postId: post._id, content: channelText, scheduledTime: finalScheduledTime, mediaStorageIds: finalStorageIds, status: status });
@@ -364,8 +341,7 @@ export function CreatePostDialog({
                 setIsCustomizing(false);
                 setNetworkData({
                     linkedin: { text: "", uploadedFiles: [] },
-                    instagram: { text: "", uploadedFiles: [] },
-                    twitter: { text: "", uploadedFiles: [] }
+                    instagram: { text: "", uploadedFiles: [] }
                 });
             }, 300);
         } catch (e) {
@@ -508,31 +484,13 @@ export function CreatePostDialog({
                                                 <Instagram className="h-3 w-3 text-[#E1306C]" />
                                             </div>
                                         </div>
-                                        {/* Twitter */}
-                                        <div
-                                            className={`relative group cursor-pointer transition-all duration-200 ${selectedChannels.includes('twitter') ? 'opacity-100 scale-100' : 'opacity-40 hover:opacity-100 scale-95 hover:scale-100'}`}
-                                            onClick={() => toggleChannel('twitter')}
-                                        >
-                                            {selectedChannels.includes('twitter') && (
-                                                <div className="absolute inset-0 rounded-full border-2 border-black scale-110"></div>
-                                            )}
-                                            <Avatar className="h-10 w-10 border-2 border-white relative z-10 shadow-sm">
-                                                <AvatarImage src={twitterProfile.image} />
-                                                <AvatarFallback>TW</AvatarFallback>
-                                            </Avatar>
-                                            <div className="absolute -bottom-1 -right-1 z-20 bg-black rounded-full p-1 shadow-sm border border-gray-100 flex items-center justify-center w-4 h-4">
-                                                <svg viewBox="0 0 24 24" aria-hidden="true" className="h-2.5 w-2.5 fill-white">
-                                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-                                                </svg>
-                                            </div>
-                                        </div>
                                     </div>
                                 )}
 
                                 {selectedChannels.length > 1 && isCustomizing && (
                                     <div className="flex items-center gap-3 mb-6 px-1">
                                         {selectedChannels.map((channel) => {
-                                            const profile = channel === 'linkedin' ? linkedinProfile : channel === 'instagram' ? instagramProfile : twitterProfile;
+                                            const profile = channel === 'linkedin' ? linkedinProfile : instagramProfile;
                                             const isActive = activeCustomizationChannel === channel;
                                             return (
                                                 <div
@@ -544,10 +502,9 @@ export function CreatePostDialog({
                                                         <AvatarImage src={profile.image} />
                                                         <AvatarFallback>{channel[0].toUpperCase()}</AvatarFallback>
                                                     </Avatar>
-                                                    <div className={`absolute -bottom-1 -right-1 rounded-full p-0.5 shadow-sm border border-white ${channel === 'twitter' ? 'bg-black' : 'bg-white'}`}>
+                                                    <div className={`absolute -bottom-1 -right-1 rounded-full p-0.5 shadow-sm border border-white bg-white`}>
                                                         {channel === 'linkedin' && <Linkedin className="w-3 h-3 text-[#0077b5] fill-current" />}
                                                         {channel === 'instagram' && <Instagram className="w-3 h-3 text-[#E1306C]" />}
-                                                        {channel === 'twitter' && <svg viewBox="0 0 24 24" className="w-2 h-2 fill-white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>}
                                                     </div>
                                                 </div>
                                             );
@@ -580,7 +537,6 @@ export function CreatePostDialog({
                                                                 <div className="flex-shrink-0">
                                                                     {channel === 'linkedin' && <div className="bg-[#0077b5] rounded-sm p-0.5"><Linkedin className="w-3.5 h-3.5 text-white fill-current" /></div>}
                                                                     {channel === 'instagram' && <Instagram className="w-4 h-4 text-[#E1306C]" />}
-                                                                    {channel === 'twitter' && <div className="w-4 h-4 bg-black rounded-full p-0.5 flex items-center justify-center"><svg viewBox="0 0 24 24" className="fill-white w-full h-full"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg></div>}
                                                                 </div>
                                                                 <p className="text-sm text-gray-400 truncate font-medium italic">
                                                                     {channelText || `Custom content for ${channel}...`}
@@ -606,7 +562,6 @@ export function CreatePostDialog({
                                                                 <div className="flex items-center gap-2">
                                                                     {channel === 'linkedin' && <Linkedin className="w-4 h-4 text-[#0077b5] fill-current" />}
                                                                     {channel === 'instagram' && <Instagram className="w-4 h-4 text-[#E1306C]" />}
-                                                                    {channel === 'twitter' && <div className="w-4 h-4 bg-black rounded-full p-0.5 flex items-center justify-center"><svg viewBox="0 0 24 24" className="fill-white w-full h-full"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg></div>}
                                                                     <span className="text-xs font-bold text-gray-700 capitalize">{channel} Content</span>
                                                                 </div>
                                                                 <div className="bg-purple-600 text-[9px] text-white font-bold px-1.5 py-0.5 rounded tracking-tighter">EDITING</div>
@@ -705,16 +660,10 @@ export function CreatePostDialog({
                                                                             </Button>
                                                                             <ChevronDown className="w-3.5 h-3.5 text-gray-300 -ml-1" />
                                                                         </div>
-                                                                        {channel === 'twitter' && (
-                                                                            <div className="flex items-center gap-1 ml-4 py-1 px-2 hover:bg-gray-100 rounded transition-colors cursor-pointer group">
-                                                                                <Plus className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
-                                                                                <span className="text-xs font-bold text-blue-600">Start Thread</span>
-                                                                            </div>
-                                                                        )}
                                                                     </div>
                                                                     <div className="flex items-center gap-3">
-                                                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${channel === 'twitter' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
-                                                                            {channelText.length} / {channel === 'twitter' ? '280' : '3000'}
+                                                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-gray-50 text-gray-500 border-gray-100">
+                                                                            {channelText.length} / 3000
                                                                         </span>
                                                                     </div>
                                                                 </div>
@@ -731,7 +680,6 @@ export function CreatePostDialog({
                                                 <div className="flex gap-4">
                                                     {isSingleLinkedin && <div className="flex-shrink-0 pt-1"><div className="bg-[#0077b5] rounded-sm p-0.5"><Linkedin className="w-5 h-5 text-white fill-current" /></div></div>}
                                                     {isSingleInstagram && <div className="flex-shrink-0 pt-1"><Instagram className="w-5 h-5 text-[#E1306C]" /></div>}
-                                                    {isSingleTwitter && <div className="flex-shrink-0 pt-1"><div className="w-5 h-5 bg-black rounded-full p-1 flex items-center justify-center"><svg viewBox="0 0 24 24" aria-hidden="true" className="h-full w-full fill-white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg></div></div>}
 
                                                     <div className="flex-1 flex flex-col gap-3">
                                                         <Textarea
@@ -863,8 +811,8 @@ export function CreatePostDialog({
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded border ${isSingleTwitter ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
-                                                        {text.length} / {isSingleTwitter ? "280" : "3000"}
+                                                    <span className="text-[11px] font-medium px-1.5 py-0.5 rounded border bg-gray-50 text-gray-500 border-gray-100">
+                                                        {text.length} / 3000
                                                     </span>
                                                 </div>
                                             </div>
@@ -1016,51 +964,6 @@ export function CreatePostDialog({
                                         </div>
                                     )}
 
-                                    {/* Twitter / X Preview */}
-                                    {selectedChannels.includes('twitter') && (!isCustomizing || activeCustomizationChannel === 'twitter') && (
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider px-1">
-                                                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg> Twitter / X
-                                            </div>
-                                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                                                <div className="flex gap-3">
-                                                    <Avatar className="w-10 h-10 border border-gray-100 flex-shrink-0">
-                                                        <AvatarImage src={twitterProfile.image} />
-                                                        <AvatarFallback>U</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between mb-0.5">
-                                                            <div className="flex items-center gap-1 min-w-0">
-                                                                <span className="text-sm font-bold text-gray-900 truncate">
-                                                                    {twitterProfile.name}
-                                                                </span>
-                                                                <span className="text-gray-500 text-sm truncate">
-                                                                    @{twitterProfile.username}
-                                                                </span>
-                                                                <span className="text-gray-500 text-sm">· 1m</span>
-                                                            </div>
-                                                            <MoreHorizontal className="w-4 h-4 text-gray-400" />
-                                                        </div>
-                                                        <div className="text-sm text-gray-800 mb-3 whitespace-pre-wrap font-normal leading-normal">
-                                                            {(isCustomizing ? networkData.twitter?.text : text) || <span className="text-gray-300 italic">Thinking about what to tweet...</span>}
-                                                        </div>
-                                                        {uploadedFiles.length > 0 && (
-                                                            <div className={`rounded-xl overflow-hidden border border-gray-200 aspect-video mb-3 bg-gray-50`}>
-                                                                <img src={uploadedFiles[0].previewUrl} className="w-full h-full object-cover" />
-                                                            </div>
-                                                        )}
-                                                        <div className="flex items-center justify-between max-w-[320px] pt-1">
-                                                            <button className="flex items-center gap-1.5 text-gray-500 group"><MessageSquare className="w-4 h-4" /><span className="text-[11px]">0</span></button>
-                                                            <button className="flex items-center gap-1.5 text-gray-500 group"><svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-2"><path d="M17 1l4 4-4 4m-3.5 0l4 4-4 4" /><path d="M21 5H9a4 4 0 0 0-4 4v10" /><path d="M3 13l-4 4 4 4" /><path d="M0 17h12a4 4 0 0 0 4-4V3" /></svg><span className="text-[11px]">0</span></button>
-                                                            <button className="flex items-center gap-1.5 text-gray-500 group"><svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg><span className="text-[11px]">0</span></button>
-                                                            <button className="flex items-center gap-1.5 text-gray-500 group"><svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg><span className="text-[11px]">0</span></button>
-                                                            <button className="flex items-center gap-1.5 text-gray-500 group"><svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg></button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         )}
@@ -1166,7 +1069,7 @@ export function CreatePostDialog({
 
                                     <button
                                         className="px-4 py-1.5 text-xs font-bold text-blue-600 hover:bg-white rounded-md transition-all disabled:opacity-50"
-                                        disabled={isSubmitting || (isSingleLinkedin && !linkedinConnected) || (isSingleTwitter && !twitterConnected) || (isSingleInstagram && !instagramConnected)}
+                                        disabled={isSubmitting || (isSingleLinkedin && !linkedinConnected) || (isSingleInstagram && !instagramConnected)}
                                         onClick={() => handleSubmit(false)}
                                     >
                                         {isSubmitting ? "Scheduling..." : "Schedule Post"}

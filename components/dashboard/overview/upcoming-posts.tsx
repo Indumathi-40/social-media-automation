@@ -3,7 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, Building2, Linkedin, Instagram, Twitter, Clock } from "lucide-react";
+import { Camera, Building2, Linkedin, Instagram, Clock } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -45,7 +45,6 @@ export function UpcomingPosts() {
                                 }`}>
                                 {post.platform === 'linkedin' && <Linkedin className="h-5 w-5 text-blue-600 fill-current" />}
                                 {post.platform === 'instagram' && <Instagram className="h-5 w-5 text-pink-600" />}
-                                {post.platform === 'twitter' && <Twitter className="h-5 w-5 text-black fill-current" />}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <h4 className="font-semibold text-sm text-gray-900 truncate">{post.content}</h4>
