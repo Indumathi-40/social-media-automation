@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { SignUpButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import Link from "next/link";
 
 export function Hero() {
     return (
@@ -23,14 +25,23 @@ export function Hero() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-md mx-auto pt-4">
-                    <Input
-                        type="email"
-                        placeholder="Enter your email"
-                        className="h-12 bg-background"
-                    />
-                    <Button size="lg" className="h-12 px-8 w-full sm:w-auto font-semibold">
-                        Start Your Free Trial
-                    </Button>
+                    <SignedOut>
+                        <Input
+                            type="email"
+                            placeholder="Enter your email"
+                            className="h-12 bg-background"
+                        />
+                        <SignUpButton mode="modal">
+                            <Button size="lg" className="h-12 px-8 w-full sm:w-auto font-semibold">
+                                Start Your Free Trial
+                            </Button>
+                        </SignUpButton>
+                    </SignedOut>
+                    <SignedIn>
+                        <Button size="lg" className="h-12 px-8 w-full sm:w-auto font-semibold" asChild>
+                            <Link href="/dashboard">Go to Dashboard</Link>
+                        </Button>
+                    </SignedIn>
                 </div>
 
                 {/* Minimalist icons/placeholders to mimic the floating elements in the design */}
