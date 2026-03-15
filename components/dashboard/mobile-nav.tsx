@@ -3,18 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
+import {
     Menu, 
     LayoutGrid, 
     Grid, 
     Instagram, 
     Linkedin, 
     Settings, 
-    SlidersHorizontal,
-    Plus,
-    Send,
-    Users,
-    MousePointer2
+    SlidersHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -31,15 +27,11 @@ export function MobileNav() {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
 
-    const navLinks = [
-        { href: "/dashboard/create", label: "Create", icon: Plus },
-        { href: "/dashboard", label: "Publish", icon: Send },
-        { href: "/dashboard/community", label: "Community", icon: Users, badge: "New" },
-        { href: "/dashboard/start-page", label: "Start Page", icon: MousePointer2 },
+    const menuLinks = [
+        { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
     ];
 
-    const sidebarLinks = [
-        { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
+    const channelLinks = [
         { href: "/dashboard/channels", label: "All Channels", icon: Grid },
         { href: "/dashboard/instagram", label: "Instagram", icon: Instagram, color: "text-pink-500" },
         { href: "/dashboard/linkedin", label: "LinkedIn", icon: Linkedin, color: "text-blue-700" },
@@ -82,11 +74,11 @@ export function MobileNav() {
                     </SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col h-[calc(100vh-65px)] overflow-y-auto p-4 space-y-6">
-                    {/* Main Nav */}
+                    {/* Menu Nav */}
                     <div>
-                        <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-3 uppercase tracking-wider">Navigation</h3>
+                        <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-3 uppercase tracking-wider">Menu</h3>
                         <div className="space-y-1">
-                            {navLinks.map((link) => (
+                            {menuLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
@@ -95,11 +87,6 @@ export function MobileNav() {
                                 >
                                     <link.icon className="h-5 w-5" />
                                     <span>{link.label}</span>
-                                    {link.badge && (
-                                        <span className="ml-auto text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-bold">
-                                            {link.badge}
-                                        </span>
-                                    )}
                                 </Link>
                             ))}
                         </div>
@@ -109,7 +96,7 @@ export function MobileNav() {
                     <div>
                         <h3 className="text-xs font-semibold text-muted-foreground mb-3 px-3 uppercase tracking-wider">Channels</h3>
                         <div className="space-y-1">
-                            {sidebarLinks.map((link) => (
+                            {channelLinks.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
