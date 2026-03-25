@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
-import { auth } from "@clerk/nextjs/server";
+import { getAuth } from "@clerk/nextjs/server";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -9,11 +11,15 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get("error");
     const errorReason = searchParams.get("error_reason");
     const errorDescription = searchParams.get("error_description");
+    const state = searchParams.get("state");
 
     // Dynamically determine the base URL from the request origin
     const { origin: baseUrl } = new URL(request.url);
 
+    console.log(`[Instagram Callback] Received request - Base URL: ${baseUrl}`);
+
     if (error) {
+        console.error(`[Instagram Callback] OAuth Error: ${error}, Reason: ${errorReason}, Desc: ${errorDescription}`);
         return NextResponse.redirect(
             new URL(
                 `/dashboard/instagram?error=${encodeURIComponent(
@@ -25,34 +31,35 @@ export async function GET(request: NextRequest) {
     }
 
     if (!code) {
+        console.error("[Instagram Callback] No code provided in query params");
         return NextResponse.redirect(
             new URL("/dashboard/instagram?error=No+code+provided", baseUrl)
         );
     }
 
     // --- AUTHENTICATION CHECK ---
-    const { userId, getToken } = await auth();
+    const { userId, getToken } = await getAuth(request);
     if (!userId) {
-        console.error("[Instagram Callback] No authenticated user found");
+        console.error("[Instagram Callback] No authenticated user found via Clerk getAuth(request).");
+        // Try to redirect back with a specific error
         return NextResponse.redirect(
             new URL("/dashboard/instagram?error=Authentication+required", baseUrl)
         );
     }
 
+    console.log(`[Instagram Callback] Authenticated User: ${userId}`);
+
     const clientId = process.env.INSTAGRAM_CLIENT_ID;
     const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET;
     const envRedirectUri = process.env.INSTAGRAM_REDIRECT_URI;
 
-    // Match initiation route detection logic
-    const host = request.headers.get("host") || "";
-    const protocol = request.headers.get("x-forwarded-proto") || "https";
-    const callbackBaseUrl = host.includes('localhost') ? `http://${host}` : `${protocol}://${host}`;
-
-    const redirectUri = envRedirectUri || `${callbackBaseUrl}/api/auth/instagram/callback`;
+    // Use the same origin-based logic as the initiation route
+    const redirectUri = envRedirectUri || `${baseUrl}/api/auth/instagram/callback`;
     
-    console.log(`[Instagram Callback] Using Robust Redirect URI: ${redirectUri}`);
+    console.log(`[Instagram Callback] Using Redirect URI: ${redirectUri}`);
 
     if (!clientId || !clientSecret) {
+        console.error("[Instagram Callback] Missing configuration: CLIENT_ID or CLIENT_SECRET");
         return NextResponse.redirect(
             new URL(
                 "/dashboard/instagram?error=Configuration+Error:+Missing+Client+ID+or+Secret",
@@ -62,9 +69,8 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        console.log(`[Instagram Callback] Received code: ${code?.substring(0, 10)}...`);
+        console.log(`[Instagram Callback] Exchanging code for access token...`);
         // 1. Exchange Code for Access Token
-        // Using the Instagram token endpoint for the branded flow
         const cleanClientId = clientId.replace(/['"\s]/g, '');
         const cleanClientSecret = clientSecret.replace(/['"\s]/g, '');
         
@@ -91,7 +97,6 @@ export async function GET(request: NextRequest) {
         let igData: any = null;
 
         // 2. Fetch Instagram User Details
-        // We try multiple strategies for "Business" vs "Consumer" accounts
         console.log("[Instagram Callback] Discovering profile details...");
         
         // --- Strategy A: Direct fetch (Instagram Basic/Branded) ---
@@ -118,9 +123,6 @@ export async function GET(request: NextRequest) {
                 const pagesData = await pagesResponse.json();
                 
                 if (pagesData.data) {
-                    console.log(`[Instagram Callback] Found ${pagesData.data.length} Facebook Pages.`);
-                    
-                    // Look for the first page that has a linked Instagram Business Account
                     for (const page of pagesData.data) {
                         if (page.instagram_business_account) {
                             igData = {
@@ -132,48 +134,16 @@ export async function GET(request: NextRequest) {
                             };
                             console.log(`[Instagram Callback] Found linked IG Business account "${igData.username}" on Page "${page.name}"`);
                             break;
-                        } else {
-                            console.log(`[Instagram Callback] Page "${page.name}" has no linked IG Business account.`);
                         }
                     }
-
-                    if (!igData && pagesData.data.length > 0) {
-                        console.warn("[Instagram Callback] Found pages, but none have a linked Instagram Business account.");
-                    }
-                } else if (pagesData.error) {
-                    console.error("[Instagram Callback] Pages API failed:", pagesData.error.message);
                 }
             } catch (e) {
                 console.error("[Instagram Callback] Pages discovery threw exception:", e);
             }
         }
 
-        // --- Strategy C: Fallback to Basic Profile ---
         if (!igData) {
-            try {
-                console.log("[Instagram Callback] Attempting last-resort basic profile fetch...");
-                const fbMeUrl = `https://graph.facebook.com/v21.0/me?fields=id,name,username,profile_picture_url&access_token=${accessToken}`;
-                const fbResponse = await fetch(fbMeUrl);
-                const fbData = await fbResponse.json();
-                
-                if (!fbData.error) {
-                    igData = { 
-                        id: fbData.id, 
-                        username: fbData.username || fbData.name?.toLowerCase().replace(/\s/g, '_'),
-                        name: fbData.name,
-                        profile_picture_url: fbData.profile_picture_url?.data?.url || fbData.profile_picture_url
-                    };
-                    console.log("[Instagram Callback] Found basic profile via Strategy C");
-                } else {
-                    console.error("[Instagram Callback] All discovery strategies failed.", fbData.error);
-                }
-            } catch (e) {
-                console.error("[Instagram Callback] Strategy C exception:", e);
-            }
-        }
-
-        if (!igData) {
-            throw new Error("Unable to identify which Instagram account you want to connect. Please ensure: 1. Your Instagram is a 'Business' or 'Creator' account. 2. It is linked to a Facebook Page. 3. You granted permission for that Page during login.");
+            throw new Error("Unable to identify which Instagram account you want to connect. Please ensure your account is a Business/Creator account and linked to a Facebook Page.");
         }
 
         console.log(`[Instagram Callback] Final identification: ${igData.username} (${igData.id})`);
@@ -199,6 +169,7 @@ export async function GET(request: NextRequest) {
             facebookPageId: igData.facebook_page_id
         });
 
+        console.log(`[Instagram Callback] Successfully connected ${igData.username}. Redirecting to dashboard...`);
         return NextResponse.redirect(new URL("/dashboard/instagram", baseUrl));
     } catch (err: any) {
         console.error("Instagram OAuth Error:", err);

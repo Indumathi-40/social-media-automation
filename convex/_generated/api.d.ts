@@ -14,7 +14,6 @@ import type * as files from "../files.js";
 import type * as instagram from "../instagram.js";
 import type * as linkedin from "../linkedin.js";
 import type * as posts from "../posts.js";
-import type * as twitter from "../twitter.js";
 import type * as users from "../users.js";
 
 import type {
@@ -30,7 +29,6 @@ declare const fullApi: ApiFromModules<{
   instagram: typeof instagram;
   linkedin: typeof linkedin;
   posts: typeof posts;
-  twitter: typeof twitter;
   users: typeof users;
 }>;
 

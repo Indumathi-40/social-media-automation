@@ -42,6 +42,9 @@ export default defineSchema({
             email: v.optional(v.string()),
         })),
 
+        // Twitter Connection
+        twitterConnected: v.optional(v.boolean()),
+
         // Legacy / Other
         updatedAt: v.number(),
     }).index("by_clerkId", ["clerkId"])

@@ -45,6 +45,7 @@ export const syncLinkedinConnection = mutation({
                 clerkId: args.clerkId,
                 ...updateData,
                 instagramConnected: false,
+                twitterConnected: false,
             });
         }
     },
@@ -144,6 +145,7 @@ export const storeUser = mutation({
             imageUrl: args.imageUrl,
             instagramConnected: false,
             linkedinConnected: false,
+            twitterConnected: false,
             updatedAt: now,
         });
         return newUserId;
